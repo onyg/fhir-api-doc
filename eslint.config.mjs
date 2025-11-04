@@ -9,5 +9,8 @@ export default defineConfig([
         extends: ['js/recommended'],
         languageOptions: { globals: globals.browser },
         rules: { indent: ['error', 4] },
+        env: {
+            "jest": true
+        }
     },
 ]);
