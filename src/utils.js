@@ -9,15 +9,16 @@ const loadData = async (url) => {
     }
 };
 
-
-const createElement = (tag, { classes = [], attributes = {}, innerHTML = '', children = [] } = {}) => {
-    const element = Object.assign(document.createElement(tag), { innerHTML });
-    classes.forEach(cls => element.classList.add(cls));
-    Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+const createElement = (tag, options = {}) => {
+    const { classes = [], attributes = {}, innerHTML = '', children = [] } = options ?? {};
+    const element = Object.assign(document.createElement(tag), { innerHTML: innerHTML ?? '' });
+    classes.filter(Boolean).forEach(cls => element.classList.add(cls));
+    Object.entries(attributes)
+        .filter(([_, value]) => value != null)
+        .forEach(([key, value]) => element.setAttribute(key, value));
     children.forEach(child => element.appendChild(child));
     return element;
 };
-
 
 const createTable = (headers, rows, includeHeader = true, classes = []) => {
     const table = createElement('table', { attributes: { style: 'width: 100%' }, classes: classes });
