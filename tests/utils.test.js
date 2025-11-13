@@ -456,4 +456,440 @@ describe('createTable', () => {
     test('should throw for non-array rows', () => {
         expect(() => utils.createTable([], 'not an array')).toThrow();
     });
+
+    describe('createCopyButton', () => {
+        // Mock window.gematikLabels and navigator.clipboard
+        beforeEach(() => {
+            window.gematikLabels = {
+                apiDoc: {
+                    Copy_Button_Label: 'Copy',
+                    Copied_Button_Label: 'Copied!'
+                }
+            };
+            Object.defineProperty(navigator, 'clipboard', {
+                value: {
+                    writeText: jest.fn(() => Promise.resolve())
+                },
+                writable: true,
+                configurable: true
+            });
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            jest.runOnlyPendingTimers();
+            jest.useRealTimers();
+            delete window.gematikLabels;
+            delete navigator.clipboard;
+        });
+
+        test('should create a copy button wrapper with correct structure', () => {
+            const button = utils.createCopyButton('test data');
+            
+            expect(button.tagName).toBe('DIV');
+            expect(button.classList.contains('gem-ig-copy-container')).toBe(true);
+        });
+
+        test('should contain language element and button wrapper', () => {
+            const button = utils.createCopyButton('test data');
+            
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            const buttonWrapper = button.querySelector('.gem-ig-copy-button-wrapper');
+            
+            expect(languageElement).toBeTruthy();
+            expect(buttonWrapper).toBeTruthy();
+        });
+
+        test('should create button with correct initial label', () => {
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            expect(copyButton).toBeTruthy();
+            expect(copyButton.innerHTML).toBe('Copy');
+        });
+
+        test('should set language text when language is provided', () => {
+            const button = utils.createCopyButton('test data', 'JavaScript');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.innerText).toBe('javascript');
+        });
+
+        test('should convert language to lowercase', () => {
+            const button = utils.createCopyButton('test data', 'JSON');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.innerText).toBe('json');
+        });
+
+        test('should handle mixed case language names', () => {
+            const button = utils.createCopyButton('test data', 'TypeScript');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.innerText).toBe('typescript');
+        });
+
+        test('should leave language element empty when language is null', () => {
+            const button = utils.createCopyButton('test data', null);
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.textContent).toBe('');
+        });
+
+        test('should leave language element empty when language is not provided', () => {
+            const button = utils.createCopyButton('test data');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.textContent).toBe('');
+        });
+
+        test('should handle empty string as language', () => {
+            const button = utils.createCopyButton('test data', '');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.textContent).toBe('');
+        });
+
+        test('should copy data to clipboard when button is clicked', async () => {
+            const testData = 'test data to copy';
+            const button = utils.createCopyButton(testData);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(testData);
+        });
+
+        test('should copy empty string data', async () => {
+            const button = utils.createCopyButton('');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith('');
+        });
+
+        test('should copy multiline data', async () => {
+            const multilineData = 'line1\nline2\nline3';
+            const button = utils.createCopyButton(multilineData);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(multilineData);
+        });
+
+        test('should copy JSON data', async () => {
+            const jsonData = '{"key": "value", "number": 123}';
+            const button = utils.createCopyButton(jsonData);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(jsonData);
+        });
+
+        test('should copy XML data', async () => {
+            const xmlData = '<root><child>value</child></root>';
+            const button = utils.createCopyButton(xmlData);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(xmlData);
+        });
+
+        test('should copy data with special characters', async () => {
+            const specialData = 'data with <>&"\' special chars';
+            const button = utils.createCopyButton(specialData);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(specialData);
+        });
+
+        test('should copy very long data', async () => {
+            const longData = 'a'.repeat(10000);
+            const button = utils.createCopyButton(longData);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(longData);
+        });
+
+        test('should change button text to "Copied!" after successful copy', async () => {
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            await Promise.resolve(); // Wait for promise to resolve
+            
+            expect(copyButton.innerText).toBe('Copied!');
+        });
+
+        test('should revert button text back to "Copy" after 2 seconds', async () => {
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            await Promise.resolve();
+            
+            expect(copyButton.innerText).toBe('Copied!');
+            
+            jest.advanceTimersByTime(2000);
+            
+            expect(copyButton.innerText).toBe('Copy');
+        });
+
+        test('should not revert button text before 2 seconds', async () => {
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            await Promise.resolve();
+            
+            jest.advanceTimersByTime(1999);
+            
+            expect(copyButton.innerText).toBe('Copied!');
+        });
+
+        test('should handle clipboard write failure gracefully', async () => {
+            jest.useRealTimers(); // Use real timers for this test
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            const error = new Error('Clipboard write failed');
+            Object.defineProperty(navigator, 'clipboard', {
+                value: {
+                    writeText: jest.fn(() => Promise.reject(error))
+                },
+                writable: true,
+                configurable: true
+            });
+            
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            // Wait for the promise rejection to be handled
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to copy text: ', error);
+            
+            consoleErrorSpy.mockRestore();
+            jest.useFakeTimers(); // Restore fake timers
+        });
+
+        test('should not change button text on clipboard failure', async () => {
+            jest.useRealTimers(); // Use real timers for this test
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            Object.defineProperty(navigator, 'clipboard', {
+                value: {
+                    writeText: jest.fn(() => Promise.reject(new Error('Failed')))
+                },
+                writable: true,
+                configurable: true
+            });
+            
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            // Wait for the promise rejection to be handled
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
+            expect(copyButton.textContent).toBe('Copy');
+            
+            consoleErrorSpy.mockRestore();
+            jest.useFakeTimers(); // Restore fake timers
+        });
+
+        test('should handle multiple clicks correctly', async () => {
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            await Promise.resolve();
+            expect(copyButton.innerText).toBe('Copied!');
+            
+            copyButton.click();
+            await Promise.resolve();
+            expect(copyButton.innerText).toBe('Copied!');
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(2);
+        });
+
+        test('should handle rapid successive clicks', async () => {
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            copyButton.click();
+            copyButton.click();
+            await Promise.resolve();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(3);
+        });
+
+        test('should reset timer on subsequent clicks', async () => {
+            const button = utils.createCopyButton('test data');
+            const copyButton = button.querySelector('button');
+            
+            // First click
+            copyButton.click();
+            await Promise.resolve();
+            expect(copyButton.innerText).toBe('Copied!');
+            
+            // Advance time but not enough to reset
+            jest.advanceTimersByTime(1500);
+            expect(copyButton.innerText).toBe('Copied!');
+            
+            // Second click should reset the timer
+            copyButton.click();
+            await Promise.resolve();
+            expect(copyButton.innerText).toBe('Copied!');
+            
+            // Now advance full 2 seconds from second click
+            jest.advanceTimersByTime(2000);
+            expect(copyButton.innerText).toBe('Copy');
+        });
+
+        test('should handle numeric data by converting to string', async () => {
+            const button = utils.createCopyButton(12345);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(12345);
+        });
+
+        test('should handle boolean data', async () => {
+            const button = utils.createCopyButton(true);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(true);
+        });
+
+        test('should handle null data', async () => {
+            const button = utils.createCopyButton(null);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(null);
+        });
+
+        test('should handle undefined data', async () => {
+            const button = utils.createCopyButton(undefined);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(undefined);
+        });
+
+        test('should return a DOM element', () => {
+            const button = utils.createCopyButton('test data');
+            
+            expect(button).toBeInstanceOf(HTMLDivElement);
+            expect(button.nodeType).toBe(Node.ELEMENT_NODE);
+        });
+
+        test('should have correct DOM hierarchy', () => {
+            const button = utils.createCopyButton('test data', 'js');
+            
+            expect(button.children.length).toBe(2);
+            expect(button.children[0].classList.contains('gem-id-code-lang')).toBe(true);
+            expect(button.children[1].classList.contains('gem-ig-copy-button-wrapper')).toBe(true);
+            expect(button.children[1].children.length).toBe(1);
+            expect(button.children[1].children[0].tagName).toBe('BUTTON');
+        });
+
+        test('should handle language with numbers', () => {
+            const button = utils.createCopyButton('test data', 'C++11');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.innerText).toBe('c++11');
+        });
+
+        test('should handle language with special characters', () => {
+            const button = utils.createCopyButton('test data', 'C#');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.innerText).toBe('c#');
+        });
+
+        test('should handle whitespace in data', async () => {
+            const dataWithWhitespace = '  \n\t  test  \n  ';
+            const button = utils.createCopyButton(dataWithWhitespace);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(dataWithWhitespace);
+        });
+
+        test('should handle Unicode characters in data', async () => {
+            const unicodeData = '你好世界 🌍 Привет мир';
+            const button = utils.createCopyButton(unicodeData);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(unicodeData);
+        });
+
+        test('should handle Unicode characters in language', () => {
+            const button = utils.createCopyButton('test data', '日本語');
+            const languageElement = button.querySelector('.gem-id-code-lang');
+            
+            expect(languageElement.innerText).toBe('日本語');
+        });
+
+        test('should create independent button instances', () => {
+            const button1 = utils.createCopyButton('data1', 'js');
+            const button2 = utils.createCopyButton('data2', 'python');
+            
+            expect(button1).not.toBe(button2);
+            expect(button1.querySelector('.gem-id-code-lang').innerText).toBe('js');
+            expect(button2.querySelector('.gem-id-code-lang').innerText).toBe('python');
+        });
+
+        test('should maintain separate click handlers for multiple instances', async () => {
+            const button1 = utils.createCopyButton('data1');
+            const button2 = utils.createCopyButton('data2');
+            
+            const copyButton1 = button1.querySelector('button');
+            const copyButton2 = button2.querySelector('button');
+            
+            copyButton1.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith('data1');
+            expect(navigator.clipboard.writeText).not.toHaveBeenCalledWith('data2');
+        });
+
+        test('should handle data with tabs and newlines', async () => {
+            const formattedCode = 'function test() {\n\treturn true;\n}';
+            const button = utils.createCopyButton(formattedCode);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(formattedCode);
+        });
+
+        test('should preserve exact data format including trailing whitespace', async () => {
+            const dataWithTrailing = 'test data   \n';
+            const button = utils.createCopyButton(dataWithTrailing);
+            const copyButton = button.querySelector('button');
+            
+            copyButton.click();
+            
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith(dataWithTrailing);
+        });
+    });
 });
