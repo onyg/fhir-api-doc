@@ -20,19 +20,29 @@ const createElement = (tag, options = {}) => {
     return element;
 };
 
+const escapeHTML = (str) => {
+    if (str === null || str === undefined) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;') 
+        .replace(/'/g, '&#039;');
+};
+
 const createTable = (headers, rows, includeHeader = true, classes = []) => {
     const table = createElement('table', { attributes: { style: 'width: 100%' }, classes: classes });
     if (includeHeader) {
         const thead = createElement('thead');
         thead.appendChild(createElement('tr', {
-            children: headers.map(headerText => createElement('th', { innerHTML: headerText }))
+            children: headers.map(headerText => createElement('th', { innerHTML: escapeHTML(headerText) }))
         }));
         table.appendChild(thead);
     }
     const tbody = createElement('tbody');
     rows.forEach(rowData => {
         tbody.appendChild(createElement('tr', {
-            children: rowData.map(cellData => createElement('td', { innerHTML: cellData }))
+            children: rowData.map(cellData => createElement('td', { innerHTML: escapeHTML(cellData) }))
         }));
     });
     table.appendChild(tbody);

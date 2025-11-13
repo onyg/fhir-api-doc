@@ -9,7 +9,7 @@ describe('createElement', () => {
         expect(element.innerHTML).toBe('');
     });
 
-        test('should add single class to element', () => {
+    test('should add single class to element', () => {
         const element = utils.createElement('div', { classes: ['container'] });
         
         expect(element.classList.contains('container')).toBe(true);
@@ -348,5 +348,112 @@ describe('createElement', () => {
         // innerHTML is set first, then children are appended
         expect(element.innerHTML).toContain('<p>Initial</p>');
         expect(element.children.length).toBeGreaterThan(1);
+    });
+});
+
+describe('createTable', () => {
+    test('should create a table with correctly ordered headers and rows', () => {
+        const table = utils.createTable(['Name', 'Age'], [['Fred', 30], ['Rik', 25]]);
+        expect(table.tagName).toBe('TABLE');
+
+        const headerCells = table.querySelectorAll('thead th');
+        expect(headerCells).toHaveLength(2);
+        expect(headerCells[0].textContent).toBe('Name');
+        expect(headerCells[1].textContent).toBe('Age');
+
+        const rows = table.querySelectorAll('tbody tr');
+        expect(rows).toHaveLength(2);
+        expect(rows[0].children).toHaveLength(2)
+        expect(rows[1].children).toHaveLength(2)
+        expect(rows[0].children[0].textContent).toBe('Fred');
+        expect(rows[0].children[1].textContent).toBe('30');
+        expect(rows[1].children[0].textContent).toBe('Rik');
+        expect(rows[1].children[1].textContent).toBe('25');
+    });
+
+    test('should create a table without headers when includeHeader is false', () => {
+        const table = utils.createTable(['Name', 'Age'], [['Fred', 30], ['Rik', 25]], false);
+        expect(table.tagName).toBe('TABLE');
+        expect(table.querySelector('thead')).toBeNull();
+        expect(table.querySelector('tbody')).toBeTruthy();
+        expect(table.querySelector('tbody tr').children.length).toBe(2);
+    });
+
+    test('should create a table with empty headers array', () => {
+        const table = utils.createTable([], [['Fred', 30], ['Rik', 25]]);
+        expect(table.tagName).toBe('TABLE');
+        expect(table.querySelector('thead')).toBeTruthy();
+        expect(table.querySelector('thead tr').children.length).toBe(0);
+        expect(table.querySelector('tbody tr').children.length).toBe(2);
+    });
+
+    test('should create a table with empty rows array', () => {
+        const table = utils.createTable(['Name', 'Age'], []);
+        expect(table.tagName).toBe('TABLE');
+        expect(table.querySelector('thead')).toBeTruthy();
+        expect(table.querySelector('thead tr').children.length).toBe(2);
+        expect(table.querySelector('tbody')).toBeTruthy();
+        expect(table.querySelector('tbody').children.length).toBe(0);
+    });
+
+    test('should create a table with rows having fewer columns than headers', () => {
+        const table = utils.createTable(['Name', 'Age', 'Country'], [['Fred', 30], ['Rik']]);
+        expect(table.tagName).toBe('TABLE');
+        expect(table.querySelector('thead')).toBeTruthy();
+        expect(table.querySelector('thead tr').children.length).toBe(3);
+        const firstRow = table.querySelector('tbody tr');
+        expect(firstRow.children.length).toBe(2);
+    });
+
+    test('should create a table with rows having more columns than headers', () => {
+        const table = utils.createTable(['Name', 'Age'], [['Fred', 30, 'Germany'], ['Rik', 25, 'Rohan']]);
+        expect(table.tagName).toBe('TABLE');
+        expect(table.querySelector('thead')).toBeTruthy();
+        expect(table.querySelector('thead tr').children.length).toBe(2);
+        const firstRow = table.querySelector('tbody tr');
+        expect(firstRow.children.length).toBe(3);
+    });
+
+    test('should add classes to the table', () => {
+        const table = utils.createTable(['Name'], [['Fred']], true, ['my-table', 'striped']);
+        expect(table.classList.contains('my-table')).toBe(true);
+        expect(table.classList.contains('striped')).toBe(true);
+    });
+
+    test('should handle special characters in headers and rows', () => {
+        const table = utils.createTable(['<Name>'], [['Fred & Rik']]);
+        const headerCell = table.querySelector('th');
+        const rowCell = table.querySelector('td');
+        expect(headerCell.textContent).toBe('<Name>');
+        expect(rowCell.textContent).toBe('Fred & Rik');
+    });
+
+    // This means creating html elements nested in table header and body cells is not possible
+    test('should escape HTML in headers and rows', () => {
+        const table = utils.createTable(['<b>Name</b>'], [['<em>Fred</em>']]);
+        const headerCell = table.querySelector('th');
+        const rowCell = table.querySelector('td');
+        expect(headerCell.innerHTML).toBe('&lt;b&gt;Name&lt;/b&gt;');
+        expect(headerCell.querySelector('b')).toBeFalsy();
+        expect(rowCell.innerHTML).toBe('&lt;em&gt;Fred&lt;/em&gt;');
+        expect(rowCell.querySelector('em')).toBeFalsy();
+    });
+
+    test('should handle null and undefined in headers and rows', () => {
+        const table = utils.createTable([null, undefined], [[null, undefined]]);
+        const headerCells = table.querySelectorAll('th');
+        const rowCells = table.querySelectorAll('td');
+        expect(headerCells[0].innerHTML).toBe('');
+        expect(headerCells[1].innerHTML).toBe('');
+        expect(rowCells[0].innerHTML).toBe('');
+        expect(rowCells[1].innerHTML).toBe('');
+    });
+
+    test('should throw for non-array headers', () => {
+        expect(() => utils.createTable('not an array', [])).toThrow();
+    });
+
+    test('should throw for non-array rows', () => {
+        expect(() => utils.createTable([], 'not an array')).toThrow();
     });
 });
