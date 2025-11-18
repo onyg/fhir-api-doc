@@ -1059,3 +1059,119 @@ describe('isJson', () => {
         expect(utils.isJson('{"number": 1.2.3}')).toBe(false); // multiple decimal points
     });
 });
+
+describe('toJson', () => {
+    test('should return object when input is already an object', () => {
+        const input = { key: 'value' };
+        const result = utils.toJson(input);
+        expect(result).toBe(input);
+    });
+
+    test('should return array when input is already an array', () => {
+        const input = [1, 2, 3];
+        const result = utils.toJson(input);
+        expect(result).toBe(input);
+    });
+
+    test('should parse valid JSON object string', () => {
+        const input = '{"key": "value"}';
+        const result = utils.toJson(input);
+        expect(result).toEqual({ key: 'value' });
+    });
+
+    test('should parse valid JSON array string', () => {
+        const input = '[1, 2, 3]';
+        const result = utils.toJson(input);
+        expect(result).toEqual([1, 2, 3]);
+    });
+
+    test('should handle nested JSON objects', () => {
+        const input = '{"nested": {"key": "value"}}';
+        const result = utils.toJson(input);
+        expect(result).toEqual({ nested: { key: 'value' } });
+    });
+
+    test('should handle empty object', () => {
+        const input = '{}';
+        const result = utils.toJson(input);
+        expect(result).toEqual({});
+    });
+
+    test('should handle empty array', () => {
+        const input = '[]';
+        const result = utils.toJson(input);
+        expect(result).toEqual([]);
+    });
+
+    test('should return null for invalid JSON string', () => {
+        const input = 'not json';
+        const result = utils.toJson(input);
+        expect(result).toBeNull();
+    });
+
+    test('should return null for malformed JSON', () => {
+        const input = '{"key": "value"';
+        const result = utils.toJson(input);
+        expect(result).toBeNull();
+    });
+
+    test('should return null for number input', () => {
+        const input = 123;
+        const result = utils.toJson(input);
+        expect(result).toBeNull();
+    });
+
+    test('should return null for boolean input', () => {
+        const input = true;
+        const result = utils.toJson(input);
+        expect(result).toBeNull();
+    });
+
+    test('should return null for null input', () => {
+        const input = null;
+        const result = utils.toJson(input);
+        expect(result).toBeNull();
+    });
+
+    test('should return null for undefined input', () => {
+        const input = undefined;
+        const result = utils.toJson(input);
+        expect(result).toBeNull();
+    });
+
+    test('should return null for function input', () => {
+        const input = () => {};
+        const result = utils.toJson(input);
+        expect(result).toBeNull();
+    });
+
+    test('should handle strings with whitespace', () => {
+        const input = '  {"key": "value"}  ';
+        const result = utils.toJson(input);
+        expect(result).toEqual({ key: 'value' });
+    });
+
+    test('should handle strings with newlines', () => {
+        const input = '{\n"key": "value"\n}';
+        const result = utils.toJson(input);
+        expect(result).toEqual({ key: 'value' });
+    });
+
+    test('should return null for non-object JSON values', () => {
+        expect(utils.toJson('"string"')).toBeNull();
+        expect(utils.toJson('123')).toBeNull();
+        expect(utils.toJson('true')).toBeNull();
+    });
+
+    test('should handle special characters in JSON', () => {
+        const input = '{"special": "\\"quotes\\" and \\\\slashes\\\\"}';
+        const result = utils.toJson(input);
+        expect(result).toEqual({ special: '"quotes" and \\slashes\\' });
+    });
+
+    test('should handle Unicode characters in JSON', () => {
+        const input = '{"unicode": "你好世界"}';
+        const result = utils.toJson(input);
+        expect(result).toEqual({ unicode: '你好世界' });
+    });
+});
