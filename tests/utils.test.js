@@ -912,3 +912,150 @@ describe('translateExpectation', () => {
         expect(utils.translateExpectation(undefined)).toBe(undefined);
     });
 });
+
+describe('isJson', () => {
+    test('should return true for valid JSON object string', () => {
+        expect(utils.isJson('{"key": "value", "number": 123}')).toBe(true);
+    });
+
+    test('should return true for valid JSON array string', () => {
+        expect(utils.isJson('[1, 2, 3, "test"]')).toBe(true);
+    });
+
+    test('should return true for valid nested JSON object', () => {
+        expect(utils.isJson('{"nested": {"key": "value"}, "array": [1, 2, 3]}')).toBe(true);
+    });
+
+    test('should handle deeply nested JSON', () => {
+        const nestedJson = '{"level1": {"level2": {"level3": {"level4": {"level5": "value"}}}}}';
+        expect(utils.isJson(nestedJson)).toBe(true);
+    });
+
+    test('should return true for empty JSON object', () => {
+        expect(utils.isJson('{}')).toBe(true);
+    });
+
+    test('should return true for empty JSON array', () => {
+        expect(utils.isJson('[]')).toBe(true);
+    });
+
+    test('should return true for JSON with valid number formats', () => {
+        expect(utils.isJson('{"zero": 0}')).toBe(true);
+        expect(utils.isJson('{"decimal": 123.456}')).toBe(true);
+        expect(utils.isJson('{"negative": -123.456}')).toBe(true);
+        expect(utils.isJson('{"exponent": 1.23e-10}')).toBe(true);
+    });
+
+    test('should return true for JSON with duplicate keys', () => {
+        expect(utils.isJson('{"key": "first", "key": "second"}')).toBe(true);
+    });
+
+    test('should handle very long keys and values', () => {
+        const longKey = 'a'.repeat(1000);
+        const longValue = 'b'.repeat(1000);
+        const json = `{"${longKey}": "${longValue}"}`;
+        expect(utils.isJson(json)).toBe(true);
+    });
+
+    test('should return true for JSON with mixed types in arrays', () => {
+        expect(utils.isJson('[1, "string", true, null, {"object": "value"}]')).toBe(true);
+    });
+
+    test('should return true for JSON with complex nested arrays', () => {
+        expect(utils.isJson('[[1, 2], [3, 4], [{"nested": "object"}]]')).toBe(true);
+    });
+
+    test('should return true for JSON with all valid JSON types', () => {
+        const completeJson = '{"object": {}, "array": [], "string": "value", "number": 123, "boolean": true, "null": null, "date": "2023-01-01T00:00:00Z"}';
+        expect(utils.isJson(completeJson)).toBe(true);
+    });
+
+    test('should return true for valid JSON with trailing whitespace', () => {
+        expect(utils.isJson('{"key": "value"}   ')).toBe(true);
+        expect(utils.isJson('   {"key": "value"}')).toBe(true);
+    });
+
+    test('should handle very large JSON strings', () => {
+        const largeJson = JSON.stringify({ data: 'x'.repeat(10000) });
+        expect(utils.isJson(largeJson)).toBe(true);
+    });
+
+    test('should return false for non-string input', () => {
+        expect(utils.isJson({ key: 'value' })).toBe(false);
+        expect(utils.isJson(123)).toBe(false);
+        expect(utils.isJson(true)).toBe(false);
+        expect(utils.isJson(null)).toBe(false);
+        expect(utils.isJson(undefined)).toBe(false);
+        expect(utils.isJson([])).toBe(false);
+    });
+
+    test('should return false for string that is not JSON', () => {
+        expect(utils.isJson('plain text string')).toBe(false);
+        expect(utils.isJson('')).toBe(false);
+        expect(utils.isJson('   ')).toBe(false);
+    });
+
+    test('should return false for JSON string that parses to non-object', () => {
+        expect(utils.isJson('"just a string"')).toBe(false);
+        expect(utils.isJson('123')).toBe(false);
+        expect(utils.isJson('true')).toBe(false);
+        expect(utils.isJson('false')).toBe(false);
+        expect(utils.isJson('null')).toBe(false);
+    });
+
+    test('should return true for JSON with special characters', () => {
+        expect(utils.isJson('{"special": "value with \\"quotes\\" and \\\\backslashes\\\\"}')).toBe(true);
+        expect(utils.isJson('{"escaped": "line1\\nline2\\ttab"}')).toBe(true);
+    });
+
+    test('should return true for JSON with Unicode characters', () => {
+        expect(utils.isJson('{"unicode": "你好世界 🌍"}')).toBe(true);
+    });
+
+    test('should return true for JSON with whitespace formatting', () => {
+        expect(utils.isJson('{\n  "key": "value",\n\t  "number": 123\n}')).toBe(true);
+    });
+
+    test('should return false for strings that look like JSON but are invalid', () => {
+        expect(utils.isJson('{key: "value"}')).toBe(false); // missing quotes around key
+        expect(utils.isJson('{"key": "value" extra}')).toBe(false); // extra content
+        expect(utils.isJson('{"key": "value"')).toBe(false); // missing closing brace
+        expect(utils.isJson('"key": "value"}')).toBe(false); // missing opening brace
+    });
+
+    test('should return false for strings with trailing commas', () => {
+        expect(utils.isJson('{"key": "value",}')).toBe(false);
+        expect(utils.isJson('[1, 2, 3,]')).toBe(false);
+    });
+
+    test('should return false for strings with unescaped control characters', () => {
+        expect(utils.isJson('{"control": "\u0000"}')).toBe(false);
+    });
+
+    test('should return false for strings that are valid YAML but not JSON', () => {
+        expect(utils.isJson('key: value')).toBe(false);
+        expect(utils.isJson('- item1\n- item2')).toBe(false);
+    });
+
+    test('should return false for strings with invalid escape sequences', () => {
+        expect(utils.isJson('{"invalid": "\\x"}')).toBe(false);
+    });
+
+    test('should return false for strings that are XML', () => {
+        expect(utils.isJson('<root><key>value</key></root>')).toBe(false);
+    });
+
+    test('should return false for strings that are CSV', () => {
+        expect(utils.isJson('key,value\n1,2')).toBe(false);
+    });
+
+    test('should return false for strings with comments (not valid JSON)', () => {
+        expect(utils.isJson('{"key": "value"} // comment')).toBe(false);
+        expect(utils.isJson('/* comment */ {"key": "value"}')).toBe(false);
+    });
+
+    test('should return false for strings with invalid number formats', () => {
+        expect(utils.isJson('{"number": 0123}')).toBe(false); // leading zero
+        expect(utils.isJson('{"number": 1.2.3}')).toBe(false); // multiple decimal points
+    });
+});
