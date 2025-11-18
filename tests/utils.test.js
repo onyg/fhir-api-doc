@@ -459,14 +459,9 @@ describe('createTable', () => {
 });
 
 describe('createCopyButton', () => {
-    // Mock window.gematikLabels and navigator.clipboard
+    // Mock navigator.clipboard
     beforeEach(() => {
-        window.gematikLabels = {
-            apiDoc: {
-                Copy_Button_Label: 'Copy',
-                Copied_Button_Label: 'Copied!'
-            }
-        };
+
         Object.defineProperty(navigator, 'clipboard', {
             value: {
                 writeText: jest.fn(() => Promise.resolve())
@@ -480,7 +475,6 @@ describe('createCopyButton', () => {
     afterEach(() => {
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
-        delete window.gematikLabels;
         delete navigator.clipboard;
     });
 
@@ -506,7 +500,7 @@ describe('createCopyButton', () => {
         const copyButton = button.querySelector('button');
         
         expect(copyButton).toBeTruthy();
-        expect(copyButton.innerHTML).toBe('Copy');
+        expect(copyButton.innerHTML).toBe('Code kopieren');
     });
 
     test('should set language text when language is provided', () => {
@@ -620,14 +614,14 @@ describe('createCopyButton', () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(longData);
     });
 
-    test('should change button text to "Copied!" after successful copy', async () => {
+    test('should change button text to "Custom copied button label" after successful copy', async () => {
         const button = utils.createCopyButton('test data');
         const copyButton = button.querySelector('button');
         
         copyButton.click();
         await Promise.resolve(); // Wait for promise to resolve
         
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
     });
 
     test('should revert button text back to "Copy" after 2 seconds', async () => {
@@ -637,11 +631,11 @@ describe('createCopyButton', () => {
         copyButton.click();
         await Promise.resolve();
         
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
         
         jest.advanceTimersByTime(2000);
         
-        expect(copyButton.innerText).toBe('Copy');
+        expect(copyButton.innerText).toBe('Code kopieren');
     });
 
     test('should not revert button text before 2 seconds', async () => {
@@ -653,7 +647,7 @@ describe('createCopyButton', () => {
         
         jest.advanceTimersByTime(1999);
         
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
     });
 
     test('should handle clipboard write failure gracefully', async () => {
@@ -701,7 +695,7 @@ describe('createCopyButton', () => {
         // Wait for the promise rejection to be handled
         await new Promise(resolve => setTimeout(resolve, 10));
         
-        expect(copyButton.textContent).toBe('Copy');
+        expect(copyButton.textContent).toBe('Code kopieren');
         
         consoleErrorSpy.mockRestore();
         jest.useFakeTimers(); // Restore fake timers
@@ -713,11 +707,11 @@ describe('createCopyButton', () => {
         
         copyButton.click();
         await Promise.resolve();
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
         
         copyButton.click();
         await Promise.resolve();
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
         
         expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(2);
     });
@@ -741,20 +735,20 @@ describe('createCopyButton', () => {
         // First click
         copyButton.click();
         await Promise.resolve();
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
         
         // Advance time but not enough to reset
         jest.advanceTimersByTime(1500);
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
         
         // Second click should reset the timer
         copyButton.click();
         await Promise.resolve();
-        expect(copyButton.innerText).toBe('Copied!');
+        expect(copyButton.innerText).toBe('Custom copied button label');
         
         // Now advance full 2 seconds from second click
         jest.advanceTimersByTime(2000);
-        expect(copyButton.innerText).toBe('Copy');
+        expect(copyButton.innerText).toBe('Code kopieren');
     });
 
     test('should handle numeric data by converting to string', async () => {
@@ -895,25 +889,16 @@ describe('createCopyButton', () => {
 });
 
 describe('translateExpectation', () => {
-    beforeEach(() => {
-        // Mock the required window.gematikLabels structure
-        window.gematikLabels = {
-            requirements: {
-                SHALL: "MUSS",
-                SHALL_NOT: "DARF NICHT",
-                SHOULD: "SOLL",
-                SHOULD_NOT: "SOLL NICHT",
-                MAY: "KANN"
-            }
-        };
-    });
 
-    test('should translate conformance values correctly', () => {
-        expect(utils.translateExpectation('SHALL')).toBe('MUSS');
+    test('should translate default conformance values correctly', () => {
         expect(utils.translateExpectation('SHOULD')).toBe('SOLL');
         expect(utils.translateExpectation('MAY')).toBe('KANN');
-        expect(utils.translateExpectation('SHALL NOT')).toBe('DARF NICHT');
         expect(utils.translateExpectation('SHOULD NOT')).toBe('SOLL NICHT');
+    });
+
+    test('should translate custom conformance values correctly', () => {
+        expect(utils.translateExpectation('SHALL')).toBe('Custom SHALL label');
+        expect(utils.translateExpectation('SHALL NOT')).toBe('Custom SHALL NOT label');
     });
 
     test('should return original value for non-matching conformance values', () => {
