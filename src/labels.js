@@ -1,25 +1,23 @@
-const gematikLabels = window.gematikLabels || {};
+const customGematikLabels = window.gematikLabels || {};
 
-gematikLabels.requirements = {
+const defaultRequirements = {
     SHALL: "MUSS",
     SHALL_NOT: "DARF NICHT",
     SHOULD: "SOLL",
     SHOULD_NOT: "SOLL NICHT",
     MAY: "KANN",
-    ...(window.gematikLabels?.requirements || {}),
 };
 
-gematikLabels.ig = {
+const defaultIg = {
     Download_Button_Image: "Bild herunterladen",
     Download_Button_SVG: "SVG herunterladen",
     FHIR_Parameter_Label: "Parameter",
     FHIR_Type_Label: "Type",
     FHIR_Expectation_Label: "Service Anforderung",
     FHIR_Documentation_Label: "Beschreibung",
-    ...(window.gematikLabels?.ig || {}),
 };
 
-gematikLabels.apiDoc = {
+const defaultApiDoc = {
     ContentTypes_Label: "Content Types",
     HeaderParams_Header: "HTTP Header-Parameter",
     Parameter_Label: "Parameter",
@@ -40,8 +38,21 @@ gematikLabels.apiDoc = {
     OperationId_Label: "OperationId",
     Copy_Button_Label: "Code kopieren",
     Copied_Button_Label: "Code wird kopiert",
-    ...(window.gematikLabels?.apiDoc || {}),
-}
+};
+
+const gematikLabels = {
+    requirements: {
+        ...defaultRequirements,
+        ...(customGematikLabels.requirements || {}),
+    },
+    ig: {
+        ...defaultIg,
+        ...(customGematikLabels.ig || {}),
+    },
+    apiDoc: {
+        ...defaultApiDoc,
+        ...(customGematikLabels.apiDoc || {}),
+    },
+};
 
 export default gematikLabels;
-  
