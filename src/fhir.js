@@ -7,10 +7,17 @@ const Invoke_Level = {
 };
 
 function extractExtensionValues(array, targetUrl) {
+
+    if (!Array.isArray(array)) {
+        return [];
+    }
+
     return array
         .filter(item => item.url === targetUrl)
         .map(item => {
             const result = {};
+            if(!Array.isArray(item.extension)) return result;
+
             for (const ext of item.extension) {
                 if (ext.url && ext.url.startsWith("value")) continue; // skip malformed
 
@@ -189,6 +196,7 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
 }
 
 export default {
+    extractExtensionValues,
     parseFhirCapabilityStatement,
     parseFhirOperationCapabilityStatement,
     parseGlobalServerInfo,
