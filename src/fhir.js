@@ -199,6 +199,7 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
 export default {
     extractExtensionValues,
     extractExtensionValue,
+    extractBaseUrl,
     parseFhirCapabilityStatement,
     parseFhirOperationCapabilityStatement,
     parseGlobalServerInfo,

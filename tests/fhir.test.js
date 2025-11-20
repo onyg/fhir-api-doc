@@ -495,3 +495,35 @@ describe('extractExtensionValue', () => {
         expect(result).toBe('line1\nline2\ttab');
     });
 });
+
+describe('extractBaseUrl', () => {
+  test('should extract base URL from extensions', () => {
+    const extensions = [
+      {
+        url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-base-url',
+        valueString: 'https://api.example.com/fhir'
+      }
+    ];
+    
+    const result = fhir.extractBaseUrl(extensions);
+    expect(result).toBe('https://api.example.com/fhir');
+  });
+
+  test('should return null when no base URL extension found', () => {
+    const extensions = [
+      {
+        url: 'https://gematik.de/fhir/ti/StructureDefinition/other-extension',
+        valueString: 'other-value'
+      }
+    ];
+    
+    const result = fhir.extractBaseUrl(extensions);
+    expect(result).toBeNull();
+  });
+
+  test('should return null when extensions is null', () => {
+    const result = fhir.extractBaseUrl(null);
+    expect(result).toBeNull();
+  });
+});
+
