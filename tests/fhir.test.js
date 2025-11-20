@@ -792,3 +792,202 @@ describe('fhir.extractHeaderValues', () => {
         expect(result).toEqual([{}]);
     });
 });
+
+describe('fhir.extractResponseInfoValues', () => {
+    const targetUrl = "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info";
+
+    test('should return empty array when input array is empty', () => {
+        const result = fhir.extractResponseInfoValues([]);
+        expect(result).toEqual([]);
+    });
+
+    test('should return empty array when no matching URL found', () => {
+        const extensions = [
+            {
+                url: 'https://some-other-url.com',
+                extension: [
+                    { url: 'code', valueString: '200' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([]);
+    });
+
+    test('should extract single response info with one extension property', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '200' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([
+            { code: '200' }
+        ]);
+    });
+
+    test('should extract single response info with multiple extension properties', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '200' },
+                    { url: 'message', valueString: 'OK' },
+                    { url: 'description', valueString: 'Success response' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([
+            {
+                code: '200',
+                message: 'OK',
+                description: 'Success response'
+            }
+        ]);
+    });
+
+    test('should extract multiple response infos', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '200' },
+                    { url: 'message', valueString: 'OK' }
+                ]
+            },
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '404' },
+                    { url: 'message', valueString: 'Not Found' }
+                ]
+            },
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '500' },
+                    { url: 'message', valueString: 'Internal Server Error' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([
+            { code: '200', message: 'OK' },
+            { code: '404', message: 'Not Found' },
+            { code: '500', message: 'Internal Server Error' }
+        ]);
+    });
+
+    test('should handle different value types (valueString, valueBoolean, valueInteger, valueCode)', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '201' },
+                    { url: 'message', valueString: 'Created' },
+                    { url: 'isSuccess', valueBoolean: true },
+                    { url: 'statusCode', valueInteger: 201 },
+                    { url: 'category', valueCode: 'success' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([
+            {
+                code: '201',
+                message: 'Created',
+                isSuccess: true,
+                statusCode: 201,
+                category: 'success'
+            }
+        ]);
+    });
+
+    test('should skip extension items where url starts with "value"', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '200' },
+                    { url: 'valueString', valueString: 'should-be-skipped' }, // malformed
+                    { url: 'valueCode', valueCode: 'also-skipped' }, // malformed
+                    { url: 'message', valueString: 'OK' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([
+            {
+                code: '200',
+                message: 'OK'
+            }
+        ]);
+    });
+
+    test('should handle mixed matching and non-matching URLs', () => {
+        const extensions = [
+            {
+                url: 'https://other-url.com',
+                extension: [
+                    { url: 'ignored', valueString: 'ignored' }
+                ]
+            },
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '200' }
+                ]
+            },
+            {
+                url: 'https://another-url.com',
+                extension: [
+                    { url: 'alsoIgnored', valueString: 'ignored' }
+                ]
+            },
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'code', valueString: '404' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([
+            { code: '200' },
+            { code: '404' }
+        ]);
+    });
+
+    test('should return empty array when extensions is undefined', () => {
+        const result = fhir.extractResponseInfoValues(undefined);
+        expect(result).toEqual([]);
+    });
+
+    test('should return empty array when extensions is null', () => {
+        const result = fhir.extractResponseInfoValues(null);
+        expect(result).toEqual([]);
+    });
+
+    test('should handle empty extension array within matching item', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: []
+            }
+        ];
+
+        const result = fhir.extractResponseInfoValues(extensions);
+        expect(result).toEqual([{}]);
+    });
+});
