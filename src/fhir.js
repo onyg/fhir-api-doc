@@ -200,6 +200,7 @@ export default {
     extractExtensionValues,
     extractExtensionValue,
     extractBaseUrl,
+    extractHttpMethods,
     parseFhirCapabilityStatement,
     parseFhirOperationCapabilityStatement,
     parseGlobalServerInfo,

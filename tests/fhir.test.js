@@ -527,3 +527,80 @@ describe('extractBaseUrl', () => {
   });
 });
 
+describe('fhir.extractHttpMethods', () => {
+    it('should return default ["POST"] when extensions is undefined', () => {
+        const result = fhir.extractHttpMethods(undefined);
+        expect(result).toEqual(["POST"]);
+    });
+
+    it('should return default ["POST"] when extensions is null', () => {
+        const result = fhir.extractHttpMethods(null);
+        expect(result).toEqual(["POST"]);
+    });
+
+    it('should return default ["POST"] when extensions is not an array', () => {
+        const result = fhir.extractHttpMethods({});
+        expect(result).toEqual(["POST"]);
+    });
+
+    it('should return default ["POST"] when extensions is an empty array', () => {
+        const result = fhir.extractHttpMethods([]);
+        expect(result).toEqual(["POST"]);
+    });
+
+    it('should return default ["POST"] when no matching extension URL is found', () => {
+        const extensions = [
+            {
+                url: "https://some-other-url.com",
+                valueCode: "GET"
+            }
+        ];
+        const result = fhir.extractHttpMethods(extensions);
+        expect(result).toEqual(["POST"]);
+    });
+
+    it('should extract a single HTTP method', () => {
+        const extensions = [
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "GET"
+            }
+        ];
+        const result = fhir.extractHttpMethods(extensions);
+        expect(result).toEqual(["GET"]);
+    });
+
+    it('should extract multiple HTTP methods', () => {
+        const extensions = [
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "GET"
+            },
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "POST"
+            },
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "PUT"
+            }
+        ];
+        const result = fhir.extractHttpMethods(extensions);
+        expect(result).toEqual(["GET", "POST", "PUT"]);
+    });
+
+    it('should convert methods to uppercase', () => {
+        const extensions = [
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "get"
+            },
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "Post"
+            }
+        ];
+        const result = fhir.extractHttpMethods(extensions);
+        expect(result).toEqual(["GET", "POST"]);
+    });
+});
