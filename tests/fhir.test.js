@@ -232,3 +232,266 @@ describe('extractExtensionValues', () => {
         expect(result[0]).toHaveProperty('param0', 'value0');
     });
 });
+
+describe('extractExtensionValue', () => {
+    it('should extract valueString from matching extension', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: 'value1' },
+            { url: 'https://example.com/ext2', valueString: 'value2' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should return null when extension is not found', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/non-existent');
+        
+        expect(result).toBeNull();
+    });
+
+    it('should return null when extensions is null', () => {
+        const result = fhir.extractExtensionValue(null, 'https://example.com/ext1');
+        
+        expect(result).toBeNull();
+    });
+
+    it('should return null when extensions is undefined', () => {
+        const result = fhir.extractExtensionValue(undefined, 'https://example.com/ext1');
+        
+        expect(result).toBeNull();
+    });
+
+    it('should return null when extensions is not an array', () => {
+        const result = fhir.extractExtensionValue('not-an-array', 'https://example.com/ext1');
+        
+        expect(result).toBeNull();
+    });
+
+    it('should return null when extensions is an object (not array)', () => {
+        const extensions = { url: 'https://example.com/ext1', valueString: 'value1' };
+        
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBeNull();
+    });
+
+    it('should return null when extensions is an empty array', () => {
+        const result = fhir.extractExtensionValue([], 'https://example.com/ext1');
+        
+        expect(result).toBeNull();
+    });
+
+    it('should ignore extensions with non-string valueString', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: 123 },
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should ignore extensions with null valueString', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: null },
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should ignore extensions with undefined valueString', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: undefined },
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should ignore extensions with missing valueString property', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1' },
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should ignore extensions with different value types (valueCode, valueBoolean, etc.)', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueCode: 'code1' },
+            { url: 'https://example.com/ext1', valueBoolean: true },
+            { url: 'https://example.com/ext1', valueInteger: 42 },
+            { url: 'https://example.com/ext1', valueString: 'correct' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('correct');
+    });
+
+    it('should handle extensions with null elements in array', () => {
+        const extensions = [
+            null,
+            { url: 'https://example.com/ext1', valueString: 'value1' },
+            undefined
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should handle extensions with missing url property', () => {
+        const extensions = [
+            { valueString: 'no-url' },
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should handle extensions with null url property', () => {
+        const extensions = [
+            { url: null, valueString: 'null-url' },
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should handle extensions with non-string url property', () => {
+        const extensions = [
+            { url: 123, valueString: 'number-url' },
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should return null when url parameter is null', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, null);
+        
+        expect(result).toBeNull();
+    });
+
+    it('should return null when url parameter is undefined', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, undefined);
+        
+        expect(result).toBeNull();
+    });
+
+    it('should return null for empty string as valueString', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: '' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe(null);
+    });
+
+    it('should handle whitespace string as valueString', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: '   ' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('   ');
+    });
+
+    it('should perform exact URL matching (case-sensitive)', () => {
+        const extensions = [
+            { url: 'https://example.com/EXT1', valueString: 'uppercase' },
+            { url: 'https://example.com/ext1', valueString: 'lowercase' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('lowercase');
+    });
+
+    it('should not perform partial URL matching', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1/extra', valueString: 'longer' },
+            { url: 'https://example.com/ext', valueString: 'shorter' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBeNull();
+    });
+
+    it('should handle extensions array with non-object elements', () => {
+        const extensions = [
+            'string-element',
+            123,
+            true,
+            { url: 'https://example.com/ext1', valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should handle very long URL strings', () => {
+        const longUrl = 'https://example.com/' + 'a'.repeat(1000);
+        const extensions = [
+            { url: longUrl, valueString: 'value1' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, longUrl);
+        
+        expect(result).toBe('value1');
+    });
+
+    it('should handle special characters in valueString', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: '特殊文字 !@#$%^&*()' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('特殊文字 !@#$%^&*()');
+    });
+
+    it('should handle newlines and tabs in valueString', () => {
+        const extensions = [
+            { url: 'https://example.com/ext1', valueString: 'line1\nline2\ttab' }
+        ];
+
+        const result = fhir.extractExtensionValue(extensions, 'https://example.com/ext1');
+        
+        expect(result).toBe('line1\nline2\ttab');
+    });
+});

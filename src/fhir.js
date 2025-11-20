@@ -33,7 +33,8 @@ function extractExtensionValues(array, targetUrl) {
 function extractExtensionValue(extensions, url) {
     if (!Array.isArray(extensions)) return null;
 
-    const ext = extensions.find(e => e.url === url && typeof e.valueString === "string");
+    const ext = extensions.find(e => e && e.url === url && typeof e.valueString === "string" && 
+        e.valueString.length > 0);
 
     return ext ? ext.valueString : null;
 }
@@ -197,6 +198,7 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
 
 export default {
     extractExtensionValues,
+    extractExtensionValue,
     parseFhirCapabilityStatement,
     parseFhirOperationCapabilityStatement,
     parseGlobalServerInfo,
