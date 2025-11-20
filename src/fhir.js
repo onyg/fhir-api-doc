@@ -69,7 +69,7 @@ function extractResponseInfoValues(extensions) {
 }
 
 function parseGlobalServerInfo(data) {
-    const capabilityStatement = utils.toJson(data);
+    const capabilityStatement = utils.toJson(data)  ?? {};
     const { extension: extensions = [] } = capabilityStatement;
     const globalHeaders = extractHeaderValues(extensions);
     const globalResponses = extractResponseInfoValues(extensions);
@@ -203,8 +203,8 @@ export default {
     extractHttpMethods,
     extractHeaderValues,
     extractResponseInfoValues,
+    parseGlobalServerInfo,
     parseFhirCapabilityStatement,
     parseFhirOperationCapabilityStatement,
-    parseGlobalServerInfo,
     Invoke_Level
 };

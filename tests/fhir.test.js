@@ -991,3 +991,138 @@ describe('fhir.extractResponseInfoValues', () => {
         expect(result).toEqual([{}]);
     });
 });
+
+describe('parseGlobalServerInfo', () => {
+  test('should parse capability statement with all extensions', () => {
+    const data = {
+      format: ['application/fhir+json', 'application/fhir+xml'],
+      extension: [
+        {
+          url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-base-url',
+          valueString: 'https://example.com/fhir'
+        },
+        {
+          url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-header',
+          extension: [
+            { url: 'name', valueString: 'Authorization' }
+          ]
+        },
+        {
+          url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info',
+          extension: [
+            { url: 'code', valueString: '200' },
+            { url: 'message', valueString: 'OK' }
+          ]
+        }
+      ]
+    };
+
+    const result = fhir.parseGlobalServerInfo(data);
+
+    expect(result).toEqual({
+      headerParams: [{ name: 'Authorization' }],
+      responseInfos: [{ code: '200', message: 'OK' }],
+      formats: ['application/fhir+json', 'application/fhir+xml'],
+      baseUrl: 'https://example.com/fhir'
+    });
+  });
+
+  test('should handle missing extensions array', () => {
+    const data = {
+      format: ['application/fhir+json']
+    };
+
+    const result = fhir.parseGlobalServerInfo(data);
+
+    expect(result).toEqual({
+      headerParams: [],
+      responseInfos: [],
+      formats: ['application/fhir+json'],
+      baseUrl: null
+    });
+  });
+
+  test('should handle empty extensions array', () => {
+    const data = {
+      format: ['application/fhir+json'],
+      extension: []
+    };
+
+    const result = fhir.parseGlobalServerInfo(data);
+
+    expect(result).toEqual({
+      headerParams: [],
+      responseInfos: [],
+      formats: ['application/fhir+json'],
+      baseUrl: null
+    });
+  });
+
+  test('should handle multiple header extensions', () => {
+    const data = {
+      format: ['application/fhir+json'],
+      extension: [
+        {
+          url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-header',
+          extension: [
+            { url: 'name', valueString: 'Authorization' }
+          ]
+        },
+        {
+          url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-header',
+          extension: [
+            { url: 'name', valueString: 'X-Custom-Header' }
+          ]
+        }
+      ]
+    };
+
+    const result = fhir.parseGlobalServerInfo(data);
+
+    expect(result.headerParams).toHaveLength(2);
+    expect(result.headerParams[0]).toEqual({ name: 'Authorization'});
+    expect(result.headerParams[1]).toEqual({ name: 'X-Custom-Header'});
+  });
+
+  test('should handle multiple response info extensions', () => {
+    const data = {
+      format: ['application/fhir+json'],
+      extension: [
+        {
+          url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info',
+          extension: [
+            { url: 'code', valueString: '200' },
+            { url: 'message', valueString: 'OK' }
+          ]
+        },
+        {
+          url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info',
+          extension: [
+            { url: 'code', valueString: '404' },
+            { url: 'message', valueString: 'Not Found' }
+          ]
+        }
+      ]
+    };
+
+    const result = fhir.parseGlobalServerInfo(data);
+
+    expect(result.responseInfos).toHaveLength(2);
+    expect(result.responseInfos[0]).toEqual({ code: '200', message: 'OK' });
+    expect(result.responseInfos[1]).toEqual({ code: '404', message: 'Not Found' });
+  });
+
+  test('should handle null data gracefully', () => {
+    const data = null;
+
+    const result = fhir.parseGlobalServerInfo(data);
+
+    expect(result).toEqual({
+      headerParams: [],
+      responseInfos: [],
+      formats: undefined,
+      baseUrl: null
+    });
+  });
+});
+
