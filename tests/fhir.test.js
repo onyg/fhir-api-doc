@@ -604,3 +604,191 @@ describe('fhir.extractHttpMethods', () => {
         expect(result).toEqual(["GET", "POST"]);
     });
 });
+
+describe('fhir.extractHeaderValues', () => {
+    const targetUrl = "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header";
+
+    test('should return empty array when input array is empty', () => {
+        const result = fhir.extractHeaderValues([]);
+        expect(result).toEqual([]);
+    });
+
+    test('should return empty array when no matching URL found', () => {
+        const extensions = [
+            {
+                url: 'https://some-other-url.com',
+                extension: [
+                    { url: 'name', valueString: 'Content-Type' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([]);
+    });
+
+    test('should extract single header with one extension property', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'Content-Type' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([
+            { name: 'Content-Type' }
+        ]);
+    });
+
+    test('should extract single header with multiple extension properties', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'Authorization' },
+                    { url: 'required', valueBoolean: true },
+                    { url: 'description', valueString: 'Bearer token' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([
+            {
+                name: 'Authorization',
+                required: true,
+                description: 'Bearer token'
+            }
+        ]);
+    });
+
+    test('should extract multiple headers', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'Content-Type' }
+                ]
+            },
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'Authorization' },
+                    { url: 'required', valueBoolean: true }
+                ]
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([
+            { name: 'Content-Type' },
+            { name: 'Authorization', required: true }
+        ]);
+    });
+
+    test('should handle different value types (valueString, valueBoolean, valueInteger, valueCode)', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'X-Custom-Header' },
+                    { url: 'required', valueBoolean: false },
+                    { url: 'maxLength', valueInteger: 255 },
+                    { url: 'type', valueCode: 'string' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([
+            {
+                name: 'X-Custom-Header',
+                required: false,
+                maxLength: 255,
+                type: 'string'
+            }
+        ]);
+    });
+
+    test('should skip extension items where url starts with "value"', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'Content-Type' },
+                    { url: 'valueString', valueString: 'should-be-skipped' }, // malformed
+                    { url: 'valueCode', valueCode: 'also-skipped' }, // malformed
+                    { url: 'required', valueBoolean: true }
+                ]
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([
+            {
+                name: 'Content-Type',
+                required: true
+            }
+        ]);
+    });
+
+    test('should handle mixed matching and non-matching URLs', () => {
+        const extensions = [
+            {
+                url: 'https://other-url.com',
+                extension: [
+                    { url: 'ignored', valueString: 'ignored' }
+                ]
+            },
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'Accept' }
+                ]
+            },
+            {
+                url: 'https://another-url.com',
+                extension: [
+                    { url: 'alsoIgnored', valueString: 'ignored' }
+                ]
+            },
+            {
+                url: targetUrl,
+                extension: [
+                    { url: 'name', valueString: 'Content-Type' }
+                ]
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([
+            { name: 'Accept' },
+            { name: 'Content-Type' }
+        ]);
+    });
+
+    test('should return empty array when extensions is undefined', () => {
+        const result = fhir.extractHeaderValues(undefined);
+        expect(result).toEqual([]);
+    });
+
+    test('should return empty array when extensions is null', () => {
+        const result = fhir.extractHeaderValues(null);
+        expect(result).toEqual([]);
+    });
+
+    test('should handle empty extension array within matching item', () => {
+        const extensions = [
+            {
+                url: targetUrl,
+                extension: []
+            }
+        ];
+
+        const result = fhir.extractHeaderValues(extensions);
+        expect(result).toEqual([{}]);
+    });
+});
