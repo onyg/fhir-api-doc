@@ -1,4 +1,5 @@
 import fhir from '../src/fhir.js';
+import utils from '../src/utils.js'
 
 describe('extractExtensionValues', () => {
 
@@ -1126,3 +1127,833 @@ describe('parseGlobalServerInfo', () => {
   });
 });
 
+describe('getRelatedSearchParams', () => {
+
+    beforeEach(() => {
+        jest.spyOn(utils, 'translateExpectation');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test('should return undefined when no interactions exist', () => {
+        const resourceDetails = {
+            searchParam: [{ name: 'name', type: 'string' }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toBeUndefined();
+    });
+
+    test('should return undefined when interaction array is empty', () => {
+        const resourceDetails = {
+            interaction: [],
+            searchParam: [{ name: 'name', type: 'string' }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toBeUndefined();
+    });
+
+    test('should return undefined when search-type interaction not found', () => {
+        const resourceDetails = {
+            interaction: [
+                { code: 'read' },
+                { code: 'create' },
+                { code: 'update' }
+            ],
+            searchParam: [{ name: 'name', type: 'string' }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toBeUndefined();
+    });
+
+    test('should process searchParams when search-type interaction exists', () => {
+        const resourceDetails = {
+            interaction: [
+                { code: 'read' },
+                { code: 'search-type' },
+                { code: 'create' }
+            ],
+            searchParam: [
+                { name: 'name', type: 'string', definition: 'http://example.com' }
+            ]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            name: 'name',
+            type: 'string',
+            definition: 'http://example.com'
+        });
+    });
+
+    test('should return undefined when searchParam is undefined', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: undefined
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toBeUndefined();
+    });
+
+    test('should undefined array when searchParam is null', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: null
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toBeUndefined();
+    });
+
+    test('should return undefined when searchParam is empty array', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: []
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toBeUndefined();
+    });
+
+    test('should map all search parameters', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [
+                { name: 'name', type: 'string', definition: 'http://example.com/name' },
+                { name: 'birthdate', type: 'date', definition: 'http://example.com/birthdate' },
+                { name: 'gender', type: 'token', definition: 'http://example.com/gender' }
+            ]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toHaveLength(3);
+        expect(result.map(p => p.name)).toEqual(['name', 'birthdate', 'gender']);
+    });
+
+    test('should map name, definition, and type fields', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'identifier',
+                definition: 'http://hl7.org/fhir/SearchParameter/Patient-identifier',
+                type: 'token'
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result[0]).toMatchObject({
+            name: 'identifier',
+            definition: 'http://hl7.org/fhir/SearchParameter/Patient-identifier',
+            type: 'token'
+        });
+    });
+
+    test('should use default documentation when not provided', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string'
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result[0].documentation).toBe('No description');
+    });
+
+    test('should use provided documentation when available', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string',
+                documentation: 'Search by patient name'
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result[0].documentation).toBe('Search by patient name');
+    });
+
+    test('should handle empty string documentation', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string',
+                documentation: ''
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result[0].documentation).toBe('');
+    });
+
+    test('should return undefined expectation when no extension exists', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string'
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result[0].expectation).toBeUndefined();
+        expect(utils.translateExpectation).toHaveBeenCalledWith(undefined);
+    });
+
+    test('should return undefined expectation when extension array is empty', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string',
+                extension: []
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result[0].expectation).toBeUndefined();
+        expect(utils.translateExpectation).toHaveBeenCalledWith(undefined);
+    });
+
+    test('should return undefined expectation when expectation extension not found', () => {
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string',
+                extension: [
+                    { url: 'http://example.com/other', valueCode: 'something' }
+                ]
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result[0].expectation).toBeUndefined();
+        expect(utils.translateExpectation).toHaveBeenCalledWith(undefined);
+    });
+
+    test('should extract and translate expectation extension', () => {
+        utils.translateExpectation.mockReturnValue('SHALL_TRANSLATED');
+
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string',
+                extension: [{
+                    url: 'http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation',
+                    valueCode: 'SHALL'
+                }]
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(utils.translateExpectation).toHaveBeenCalledWith('SHALL');
+        expect(result[0].expectation).toBe('SHALL_TRANSLATED');
+    });
+
+    test('should handle multiple extensions and find correct one', () => {
+        utils.translateExpectation.mockReturnValue('SHOULD');
+
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [{
+                name: 'name',
+                type: 'string',
+                extension: [
+                    { url: 'http://example.com/custom', valueCode: 'custom' },
+                    { url: 'http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation', valueCode: 'SHOULD' },
+                    { url: 'http://example.com/other', valueCode: 'other' }
+                ]
+            }]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(utils.translateExpectation).toHaveBeenCalledWith('SHOULD');
+        expect(result[0].expectation).toBe('SHOULD');
+    });
+
+    test('should handle different expectation values', () => {
+        const expectations = ['SHALL', 'SHOULD', 'MAY', 'SHOULD-NOT'];
+
+        expectations.forEach(expectedValue => {
+            utils.translateExpectation.mockReturnValue(expectedValue);
+
+            const resourceDetails = {
+                interaction: [{ code: 'search-type' }],
+                searchParam: [{
+                    name: 'name',
+                    type: 'string',
+                    extension: [{
+                        url: 'http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation',
+                        valueCode: expectedValue
+                    }]
+                }]
+            };
+
+            const result = fhir.getRelatedSearchParams(resourceDetails);
+
+            expect(result[0].expectation).toBe(expectedValue);
+        });
+    });
+
+    test('should handle multiple search params with mixed extensions', () => {
+        utils.translateExpectation
+            .mockReturnValueOnce('SHALL')
+            .mockReturnValueOnce(undefined)
+            .mockReturnValueOnce('MAY');
+
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [
+                {
+                    name: 'name',
+                    type: 'string',
+                    definition: 'http://example.com/name',
+                    documentation: 'Patient name',
+                    extension: [{
+                        url: 'http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation',
+                        valueCode: 'SHALL'
+                    }]
+                },
+                {
+                    name: 'birthdate',
+                    type: 'date',
+                    definition: 'http://example.com/birthdate'
+                    // No extension
+                },
+                {
+                    name: 'gender',
+                    type: 'token',
+                    definition: 'http://example.com/gender',
+                    documentation: 'Gender',
+                    extension: [{
+                        url: 'http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation',
+                        valueCode: 'MAY'
+                    }]
+                }
+            ]
+        };
+
+        const result = fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(result).toHaveLength(3);
+        expect(result[0]).toMatchObject({
+            name: 'name',
+            expectation: 'SHALL',
+            documentation: 'Patient name'
+        });
+        expect(result[1]).toMatchObject({
+            name: 'birthdate',
+            expectation: undefined,
+            documentation: 'No description'
+        });
+        expect(result[2]).toMatchObject({
+            name: 'gender',
+            expectation: 'MAY',
+            documentation: 'Gender'
+        });
+    });
+
+    test('should not mutate original resourceDetails', () => {
+        const originalSearchParam = {
+            name: 'name',
+            type: 'string',
+            definition: 'http://example.com'
+        };
+
+        const resourceDetails = {
+            interaction: [{ code: 'search-type' }],
+            searchParam: [originalSearchParam]
+        };
+
+        fhir.getRelatedSearchParams(resourceDetails);
+
+        expect(originalSearchParam).toEqual({
+            name: 'name',
+            type: 'string',
+            definition: 'http://example.com'
+        });
+    });
+});
+
+
+describe('parseFhirCapabilityStatement', () => {
+    
+    test('should parse complete capability statement with search-type interaction', () => {
+        const capabilityStatement = {
+            format: ['json', 'xml'],
+            extension: [
+                {
+                    url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-base-url',
+                    valueString: 'https://api.example.com'
+                },
+                {
+                    url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-header',
+                    extension: [
+                        { url: 'name', valueString: 'Authorization' },
+                        { url: 'value', valueString: 'Bearer token' }
+                    ]
+                },
+                {
+                    url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info',
+                    extension: [
+                        { url: 'code', valueString: '200' },
+                        { url: 'message', valueString: 'OK' }
+                    ]
+                }
+            ],
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    conditionalUpdate: true,
+                    interaction: [{
+                        code: 'search-type',
+                        extension: [
+                            {
+                                url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-header',
+                                extension: [
+                                    { url: 'x-custom', valueString: 'local-value' }
+                                ]
+                            }
+                        ]
+                    }],
+                    searchParam: [{
+                        name: 'identifier',
+                        definition: 'http://example.com/identifier',
+                        type: 'token',
+                        documentation: 'Search by identifier',
+                        extension: [{
+                            url: 'http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation',
+                            valueCode: 'VALUECODEVALUE'
+                        }]
+                    }],
+                    searchInclude: ['Patient:organization'],
+                    searchRevInclude: ['Observation:patient']
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient', 'search-type');
+
+        expect(result.searchParams).toHaveLength(1);
+        expect(result.searchParams[0]).toEqual({
+            name: 'identifier',
+            definition: 'http://example.com/identifier',
+            type: 'token',
+            documentation: 'Search by identifier',
+            expectation: 'VALUECODEVALUE'
+        });
+        expect(result.searchInclude).toEqual(['Patient:organization']);
+        expect(result.searchRevInclude).toEqual(['Observation:patient']);
+        expect(result.headerParams).toHaveLength(2);
+        expect(result.responseInfos).toHaveLength(1);
+        expect(result.formats).toEqual(['json', 'xml']);
+        expect(result.conditionalUpdate).toBe(true);
+        expect(result.baseUrl).toBe('https://api.example.com');
+    });
+
+    test('should return empty object when resourceType is not found', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient'
+                }]
+            }]
+        };
+
+        console.error = jest.fn();
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Observation');
+
+        expect(result).toEqual({});
+        expect(console.error).toHaveBeenCalledWith('Observation not found in any rest entry!');
+    });
+
+    test('should return empty structure when requested interaction not found', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{
+                        code: 'read'
+                    }],
+                    searchParam: []
+                }]
+            }]
+        };
+
+        console.error = jest.fn();
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient', 'search-type');
+
+        expect(result).toEqual({
+            baseUrl: null,
+            conditionalUpdate: undefined,
+            formats: undefined,
+            headerParams: [],
+            responseInfos: [],
+            searchInclude: undefined,
+            searchParams: undefined,
+            searchRevInclude: undefined,
+        });
+    });
+
+    test('should handle missing searchParam field', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }]
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.searchParams).toBeUndefined();
+        expect(result.headerParams).toEqual([]);
+    });
+
+    test('should handle searchParam without documentation', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: [{
+                        name: 'name',
+                        definition: 'http://example.com/name',
+                        type: 'string'
+                    }]
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.searchParams[0].documentation).toBe('No description');
+    });
+
+    test('should handle searchParam without expectation extension', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: [{
+                        name: 'name',
+                        definition: 'http://example.com/name',
+                        type: 'string',
+                        documentation: 'Search by name'
+                    }]
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.searchParams[0].expectation).toBeUndefined();
+    });
+
+    test('should handle empty rest array', () => {
+        const capabilityStatement = {
+            rest: []
+        };
+
+        console.error = jest.fn();
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result).toEqual({});
+    });
+
+    test('should handle missing rest field', () => {
+        const capabilityStatement = {};
+
+        console.error = jest.fn();
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result).toEqual({});
+    });
+
+    test('should handle missing extension field', () => {
+        const capabilityStatement = {
+            format: ['json'],
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: []
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.headerParams).toEqual([]);
+        expect(result.responseInfos).toEqual([]);
+        expect(result.baseUrl).toBeNull();
+    });
+
+    test('should handle missing resource array', () => {
+        const capabilityStatement = {
+            rest: [{}]
+        };
+
+        console.error = jest.fn();
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result).toEqual({});
+    });
+
+    test('should parse JSON string input', () => {
+        const capabilityStatement = JSON.stringify({
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: []
+                }]
+            }]
+        });
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.searchParams).toBeUndefined();
+    });
+
+    test('should prioritize local headers over global headers', () => {
+        const capabilityStatement = {
+            extension: [
+                {
+                    url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-header',
+                    extension: [
+                        { url: 'global-header', valueString: 'global' }
+                    ]
+                }
+            ],
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{
+                        code: 'search-type',
+                        extension: [
+                            {
+                                url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-header',
+                                extension: [
+                                    { url: 'local-header', valueString: 'local' }
+                                ]
+                            }
+                        ]
+                    }],
+                    searchParam: []
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.headerParams).toHaveLength(2);
+        expect(result.headerParams[0]).toHaveProperty('local-header');
+        expect(result.headerParams[1]).toHaveProperty('global-header');
+    });
+
+    test('should handle interaction without extension field', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: []
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.headerParams).toEqual([]);
+        expect(result.responseInfos).toEqual([]);
+    });
+
+    test('should handle multiple rest entries and find resource in second entry', () => {
+        const capabilityStatement = {
+            rest: [
+                {
+                    resource: [{
+                        type: 'Observation',
+                        interaction: [{ code: 'search-type' }]
+                    }]
+                },
+                {
+                    resource: [{
+                        type: 'Patient',
+                        interaction: [{ code: 'search-type' }],
+                        searchParam: [{
+                            name: 'id',
+                            definition: 'http://example.com/id',
+                            type: 'token',
+                            documentation: 'ID search'
+                        }]
+                    }]
+                }
+            ]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.searchParams).toHaveLength(1);
+        expect(result.searchParams[0].name).toBe('id');
+    });
+
+    test('should default to search-type interaction when no code provided', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: [{ name: 'name', type: 'string' }]
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.searchParams).toContainEqual(
+            {
+                "definition": undefined,
+                "documentation": "No description",
+                "expectation": undefined,
+                "name": "name",
+                "type": "string"
+            }
+        );
+    });
+
+    test('should ignore non-matching interactions when using default', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [
+                        { code: 'read' },
+                        { code: 'create' }
+                    ],
+                    searchParam: [{ name: 'name', type: 'string' }]
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        // Should not find search params since search-type interaction missing
+        expect(result).toEqual({
+            baseUrl: null,
+            conditionalUpdate: undefined,
+            formats: undefined,
+            headerParams: [],
+            responseInfos: [],
+            searchInclude: undefined,
+            searchParams: undefined,
+            searchRevInclude: undefined,
+        });
+    });
+
+    test('should handle conditionalUpdate as false', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    conditionalUpdate: false,
+                    searchParam: []
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.conditionalUpdate).toBe(false);
+    });
+
+    test('should handle missing conditionalUpdate field', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: []
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.conditionalUpdate).toBeUndefined();
+    });
+
+    test('should handle multiple search parameters', () => {
+        const capabilityStatement = {
+            rest: [{
+                resource: [{
+                    type: 'Patient',
+                    interaction: [{ code: 'search-type' }],
+                    searchParam: [
+                        {
+                            name: 'identifier',
+                            definition: 'http://example.com/identifier',
+                            type: 'token',
+                            documentation: 'Search by identifier'
+                        },
+                        {
+                            name: 'name',
+                            definition: 'http://example.com/name',
+                            type: 'string'
+                        },
+                        {
+                            name: 'birthdate',
+                            definition: 'http://example.com/birthdate',
+                            type: 'date',
+                            documentation: 'Search by birthdate',
+                            extension: [{
+                                url: 'http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation',
+                                valueCode: 'MAY'
+                            }]
+                        }
+                    ]
+                }]
+            }]
+        };
+
+        const result = fhir.parseFhirCapabilityStatement(capabilityStatement, 'Patient');
+
+        expect(result.searchParams).toHaveLength(3);
+        expect(result.searchParams[0].name).toBe('identifier');
+        expect(result.searchParams[1].name).toBe('name');
+        expect(result.searchParams[1].documentation).toBe('No description');
+        expect(result.searchParams[2].expectation).toBe('KANN');
+    });
+});

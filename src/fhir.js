@@ -83,6 +83,28 @@ function parseGlobalServerInfo(data) {
     };
 }
 
+function getRelatedSearchParams(resourceDetails) {
+    const hasSearchTypeInteraction = (resourceDetails.interaction || []).find(
+        int => int.code === "search-type"
+    );
+
+    if (!hasSearchTypeInteraction) {
+        return undefined;
+    }
+
+    const searchParams = (resourceDetails.searchParam || []).map(({ name, definition, type, documentation = 'No description', extension }) => ({
+        name,
+        definition,
+        type,
+        documentation,
+        expectation: utils.translateExpectation(
+            extension?.find(ext => ext.url === "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation")?.valueCode
+        )
+    }));
+
+    return searchParams.length > 0 ? searchParams : undefined;
+}
+
 function parseFhirCapabilityStatement(data, resourceType, interactionCode = "search-type") {
     const capabilityStatement = utils.toJson(data);
 
@@ -110,15 +132,7 @@ function parseFhirCapabilityStatement(data, resourceType, interactionCode = "sea
             : [];
 
         return {
-            searchParams: resourceDetails.searchParam?.map(({ name, definition, type, documentation = 'No description', extension }) => ({
-                name,
-                definition,
-                type,
-                documentation,
-                expectation: utils.translateExpectation(
-                    extension?.find(ext => ext.url === "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation")?.valueCode
-                )
-            })),
+            searchParams: getRelatedSearchParams(resourceDetails),
             searchInclude: resourceDetails.searchInclude,
             searchRevInclude: resourceDetails.searchRevInclude,
             headerParams: [...localHeaders, ...globalHeaders],
@@ -204,6 +218,7 @@ export default {
     extractHeaderValues,
     extractResponseInfoValues,
     parseGlobalServerInfo,
+    getRelatedSearchParams,
     parseFhirCapabilityStatement,
     parseFhirOperationCapabilityStatement,
     Invoke_Level
