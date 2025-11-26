@@ -151,8 +151,8 @@ function parseFhirCapabilityStatement(data, resourceType, interactionCode = "sea
 function getOperation(operationDefinition, invokeLevel, restEntry, resourceType=null) {
     if (invokeLevel === Invoke_Level.system) {
         const { operation = [] } = restEntry;
-        return operation.find(op => op.definition === operationDefinition.url);
-    } else if(invokeLevel === Invoke_Level.type | invokeLevel === Invoke_Level.instance) {
+        return operation.find(op => op.definition === operationDefinition?.url);
+    } else if(invokeLevel === Invoke_Level.type || invokeLevel === Invoke_Level.instance) {
         if(!resourceType){
             console.error(`You need a resourceType when invoke level is "${invokeLevel}"`);
             return null;
@@ -220,6 +220,7 @@ export default {
     parseGlobalServerInfo,
     getRelatedSearchParams,
     parseFhirCapabilityStatement,
+    getOperation,
     parseFhirOperationCapabilityStatement,
     Invoke_Level
 };

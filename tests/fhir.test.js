@@ -1957,3 +1957,218 @@ describe('parseFhirCapabilityStatement', () => {
         expect(result.searchParams[2].expectation).toBe('KANN');
     });
 });
+
+describe('getOperation', () => {
+    const mockOperationDefinition = {
+        url: 'http://example.com/OperationDefinition/test-operation'
+    };
+
+    const mockRestEntry = {
+        operation: [
+            { definition: 'http://example.com/OperationDefinition/test-operation', name: 'testOp' },
+            { definition: 'http://example.com/OperationDefinition/other-operation', name: 'otherOp' }
+        ],
+        resource: [
+            {
+                type: 'Patient',
+                operation: [
+                    { definition: 'http://example.com/OperationDefinition/test-operation', name: 'patientOp' },
+                    { definition: 'http://example.com/OperationDefinition/patient-specific', name: 'patientSpecific' }
+                ]
+            },
+            {
+                type: 'Observation',
+                operation: [
+                    { definition: 'http://example.com/OperationDefinition/observation-op', name: 'obsOp' }
+                ]
+            }
+        ]
+    };
+
+    it('should return system-level operation when invokeLevel is "system"', () => {
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.system,
+            mockRestEntry
+        );
+
+        expect(result).toEqual({ 
+            definition: 'http://example.com/OperationDefinition/test-operation', 
+            name: 'testOp' 
+        });
+    });
+
+    it('should return undefined when system-level operation is not found', () => {
+        const missingOpDef = { url: 'http://example.com/OperationDefinition/non-existent' };
+        
+        const result = fhir.getOperation(
+            missingOpDef,
+            fhir.Invoke_Level.system,
+            mockRestEntry
+        );
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should return null undefined system-level restEntry has no operations', () => {
+        const emptyRestEntry = { operation: [] };
+        
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.system,
+            emptyRestEntry
+        );
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should return type-level operation when invokeLevel is "type" and resourceType is provided', () => {
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.type,
+            mockRestEntry,
+            'Patient'
+        );
+
+        expect(result).toEqual({ 
+            definition: 'http://example.com/OperationDefinition/test-operation', 
+            name: 'patientOp' 
+        });
+    });
+
+    it('should return instance-level operation when invokeLevel is "instance" and resourceType is provided', () => {
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.instance,
+            mockRestEntry,
+            'Patient'
+        );
+
+        expect(result).toEqual({ 
+            definition: 'http://example.com/OperationDefinition/test-operation', 
+            name: 'patientOp' 
+        });
+    });
+
+    it('should log error and return null when type-level operation requested without resourceType', () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+        
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.type,
+            mockRestEntry
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'You need a resourceType when invoke level is "type"'
+        );
+        expect(result).toBeNull();
+        
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should log error and return null when instance-level operation requested without resourceType', () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+        
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.instance,
+            mockRestEntry
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'You need a resourceType when invoke level is "instance"'
+        );
+        expect(result).toBeNull();
+        
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should return null when resourceType is not found in restEntry', () => {
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.type,
+            mockRestEntry,
+            'Medication'
+        );
+
+        expect(result).toBeNull();
+    });
+
+    it('should return null when resource has no operations array', () => {
+        const restEntryWithoutOps = {
+            resource: [
+                { type: 'Patient' }
+            ]
+        };
+
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.type,
+            restEntryWithoutOps,
+            'Patient'
+        );
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should return null when operation definition is not found in resource operations', () => {
+        const missingOpDef = { url: 'http://example.com/OperationDefinition/non-existent' };
+        
+        const result = fhir.getOperation(
+            missingOpDef,
+            fhir.Invoke_Level.type,
+            mockRestEntry,
+            'Patient'
+        );
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should handle restEntry with missing operation array for system level', () => {
+        const restEntryNoOps = { resource: [] };
+        
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.system,
+            restEntryNoOps
+        );
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should handle restEntry with missing resource array for type level', () => {
+        const restEntryNoResources = { operation: [] };
+        
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.type,
+            restEntryNoResources,
+            'Patient'
+        );
+
+        expect(result).toBeNull();
+    });
+
+
+    it('should handle null or undefined operationDefinition gracefully', () => {
+        const result = fhir.getOperation(
+            null,
+            fhir.Invoke_Level.system,
+            mockRestEntry
+        );
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should handle empty restEntry', () => {
+        const result = fhir.getOperation(
+            mockOperationDefinition,
+            fhir.Invoke_Level.system,
+            {}
+        );
+
+        expect(result).toBeUndefined();
+    });
+});
+
