@@ -68,8 +68,8 @@ function parseParams(container) {
     return divs.map(div => {
         const name = div.getAttribute('data-name');
         const type = div.getAttribute('data-type');
-        const documentation = div.innerHTML;
-        const description = div.innerHTML;
+        const documentation = div.innerHTML.trim();
+        const description = div.innerHTML.trim();
         const expectation = "";
 
         return {

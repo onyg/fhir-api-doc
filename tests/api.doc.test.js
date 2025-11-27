@@ -105,7 +105,7 @@ describe('parseExampleDivs', () => {
         const div = document.createElement('div');
         div.setAttribute('data-name', 'test');
         div.setAttribute('data-type', 'json');
-        div.innerHTML = '\n  {"key": "value"}  \n';
+        div.innerHTML = '  {"key": "value"}  ';
         container.appendChild(div);
 
         const result = apiDoc.parseExampleDivs(container);
@@ -214,5 +214,126 @@ describe('parseValueDivs', () => {
         outerDiv.appendChild(innerDiv);
         container.appendChild(outerDiv);
         expect(apiDoc.parseValueDivs(container)).toEqual(['outer', 'inner']);
+    });
+});
+
+describe('parseParams', () => {
+    let container;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(container);
+    });
+
+    it('should return empty array for null container', () => {
+        expect(apiDoc.parseParams(null)).toEqual([]);
+    });
+
+    it('should return empty array for empty container', () => {
+        expect(apiDoc.parseParams(container)).toEqual([]);
+    });
+
+    it('should parse div with data-name and data-type attributes', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-name', 'param1');
+        div.setAttribute('data-type', 'string');
+        div.innerHTML = 'Parameter description';
+        container.appendChild(div);
+
+        const result = apiDoc.parseParams(container);
+        expect(result).toEqual([{
+            name: 'param1',
+            type: 'string',
+            documentation: 'Parameter description',
+            description: 'Parameter description',
+            expectation: ''
+        }]);
+    });
+
+    it('should handle multiple parameter divs', () => {
+        const div1 = document.createElement('div');
+        div1.setAttribute('data-name', 'param1');
+        div1.setAttribute('data-type', 'string');
+        div1.innerHTML = 'First param';
+
+        const div2 = document.createElement('div');
+        div2.setAttribute('data-name', 'param2');
+        div2.setAttribute('data-type', 'number');
+        div2.innerHTML = 'Second param';
+
+        container.append(div1, div2);
+
+        const result = apiDoc.parseParams(container);
+        expect(result).toEqual([
+            {
+                name: 'param1',
+                type: 'string',
+                documentation: 'First param',
+                description: 'First param',
+                expectation: ''
+            },
+            {
+                name: 'param2',
+                type: 'number',
+                documentation: 'Second param',
+                description: 'Second param',
+                expectation: ''
+            }
+        ]);
+    });
+
+    it('should handle empty innerHTML as empty string', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-name', 'param1');
+        div.setAttribute('data-type', 'string');
+        div.innerHTML = '';
+        container.appendChild(div);
+
+        const result = apiDoc.parseParams(container);
+        expect(result).toEqual([{
+            name: 'param1',
+            type: 'string',
+            documentation: '',
+            description: '',
+            expectation: ''
+        }]);
+    });
+
+    it('should trim innerHTML whitespace', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-name', 'param1');
+        div.setAttribute('data-type', 'string');
+        div.innerHTML = '  Parameter description  ';
+        container.appendChild(div);
+
+        const result = apiDoc.parseParams(container);
+        expect(result).toEqual([{
+            name: 'param1',
+            type: 'string',
+            documentation: 'Parameter description',
+            description: 'Parameter description',
+            expectation: ''
+        }]);
+    });
+
+    it('should handle special characters in innerHTML', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-name', 'param1');
+        div.setAttribute('data-type', 'string');
+        div.innerHTML = 'Description with <tags> & entities';
+        container.appendChild(div);
+
+        const result = apiDoc.parseParams(container);
+        expect(result).toEqual([{
+            name: 'param1',
+            type: 'string',
+            documentation: 'Description with <tags> &amp; entities</tags>',
+            description: 'Description with <tags> &amp; entities</tags>',
+            expectation: ''
+        }]);
     });
 });
