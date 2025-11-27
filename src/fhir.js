@@ -176,6 +176,11 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
     const globalResponses = extractResponseInfoValues(extensions);
     const { rest: rest = [] } = capabilityStatement;
     for (const restEntry of rest) {
+        const operation = getOperation(operationDefinition, invokeLevel, restEntry, resourceType)
+        if (!operation) {
+            continue;
+        }
+
         let localHeaders = [];
         let localResponses = [];
         const searchParams = (operationDefinition?.parameter || [])
@@ -186,7 +191,6 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
                 documentation
             }));
 
-        const operation = getOperation(operationDefinition, invokeLevel, restEntry, resourceType)
         localHeaders = operation?.extension
             ? extractHeaderValues(operation.extension)
             : [];

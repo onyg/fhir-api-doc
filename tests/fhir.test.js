@@ -528,7 +528,7 @@ describe('extractBaseUrl', () => {
     });
 });
 
-describe('fhir.extractHttpMethods', () => {
+describe('extractHttpMethods', () => {
     it('should return default ["POST"] when extensions is undefined', () => {
         const result = fhir.extractHttpMethods(undefined);
         expect(result).toEqual(["POST"]);
@@ -606,7 +606,7 @@ describe('fhir.extractHttpMethods', () => {
     });
 });
 
-describe('fhir.extractHeaderValues', () => {
+describe('extractHeaderValues', () => {
     const targetUrl = "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header";
 
     test('should return empty array when input array is empty', () => {
@@ -794,7 +794,7 @@ describe('fhir.extractHeaderValues', () => {
     });
 });
 
-describe('fhir.extractResponseInfoValues', () => {
+describe('extractResponseInfoValues', () => {
     const targetUrl = "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info";
 
     test('should return empty array when input array is empty', () => {
@@ -2172,3 +2172,505 @@ describe('getOperation', () => {
     });
 });
 
+describe('parseFhirOperationCapabilityStatement', () => {
+    
+    const baseCapabilityStatement = {
+        extension: [
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-base-url",
+                valueString: "https://api.example.com"
+            },
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header",
+                extension: [
+                    { url: "name", valueString: "Authorization" },
+                    { url: "value", valueString: "Bearer token" }
+                ]
+            },
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info",
+                extension: [
+                    { url: "code", valueString: "200" },
+                    { url: "message", valueString: "OK" }
+                ]
+            }
+        ],
+        format: ["json", "xml"],
+        rest: [
+            {
+                operation: [
+                    {
+                        name: "testOp",
+                        definition: "http://example.com/OperationDefinition/test",
+                        extension: [
+                            {
+                                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header",
+                                extension: [
+                                    { url: "name", valueString: "X-Custom" },
+                                    { url: "value", valueString: "custom-value" }
+                                ]
+                            },
+                            {
+                                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info",
+                                extension: [
+                                    { url: "code", valueString: "201" },
+                                    { url: "message", valueString: "CREATED" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+
+    const baseOperationDefinition = {
+        url: "http://example.com/OperationDefinition/test",
+        code: "test-operation",
+        parameter: [
+            { name: "param1", type: "string", use: "in", documentation: "First param" },
+            { name: "param2", type: "integer", use: "in" },
+            { name: "result", type: "Bundle", use: "out", documentation: "Result" }
+        ],
+        extension: [
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "post"
+            },
+            {
+                url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                valueCode: "get"
+            }
+        ]
+    };
+
+    const resourceCapabilityStatement = {
+        extension: [],
+        rest: [
+            {
+                resource: [
+                    {
+                        type: "Patient",
+                        operation: [
+                            {
+                                name: "validate",
+                                definition: "http://example.com/OperationDefinition/validate",
+                                extension: [
+                                    {
+                                        url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header",
+                                        extension: [
+                                            { url: "name", valueString: "X-Resource-Header" },
+                                            { url: "value", valueString: "resource-value" }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        type: "Observation",
+                        operation: [
+                            {
+                                name: "stats",
+                                definition: "http://example.com/OperationDefinition/stats"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+
+    const resourceOperationDefinition = {
+        url: "http://example.com/OperationDefinition/validate",
+        code: "validate",
+        parameter: [],
+        extension: []
+    };
+
+    const minimalCapabilityStatement = {
+        rest: []
+    };
+
+    const minimalOperationDefinition = {
+        url: "http://test.com/op",
+        code: "test",
+        parameter: [],
+        extension: []
+    };
+
+    it('should parse operation capability statement with system level invoke', () => {
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            baseCapabilityStatement,
+            baseOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.baseUrl).toBe("https://api.example.com");
+        expect(result.code).toBe("test-operation");
+        expect(result.formats).toEqual(["json", "xml"]);
+        expect(result.methods).toEqual(["POST", "GET"]);
+        expect(result.searchParams).toHaveLength(2);
+        expect(result.searchParams[0]).toEqual({
+            name: "param1",
+            type: "string",
+            documentation: "First param"
+        });
+        expect(result.searchParams[1]).toEqual({
+            name: "param2",
+            type: "integer",
+            documentation: "-"
+        });
+        expect(result.headerParams).toHaveLength(2);
+        expect(result.responseInfos).toHaveLength(2);
+    });
+
+    it('should parse operation capability statement with type level invoke', () => {
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            resourceCapabilityStatement,
+            resourceOperationDefinition,
+            fhir.Invoke_Level.type,
+            "Patient"
+        );
+
+        expect(result.code).toBe("validate");
+        expect(result.methods).toEqual(["POST"]);
+        expect(result.headerParams).toHaveLength(1);
+        expect(result.headerParams[0]).toHaveProperty("name", "X-Resource-Header");
+    });
+
+    it('should parse operation capability statement with instance level invoke', () => {
+        const operationData = {
+            url: "http://example.com/OperationDefinition/stats",
+            code: "stats",
+            parameter: [{ name: "period", type: "Period", use: "in", documentation: "Time period" }],
+            extension: []
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            resourceCapabilityStatement,
+            operationData,
+            fhir.Invoke_Level.instance,
+            "Observation"
+        );
+
+        expect(result.code).toBe("stats");
+        expect(result.searchParams).toHaveLength(1);
+        expect(result.searchParams[0].name).toBe("period");
+    });
+
+    it('should handle JSON string inputs', () => {
+        const capabilityData = JSON.stringify({
+            extension: [],
+            rest: [{ operation: [{ definition: "http://test.com/op", name: "test" }] }]
+        });
+
+        const operationData = JSON.stringify(minimalOperationDefinition);
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            operationData,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.code).toBe("test");
+    });
+
+    it('should handle missing extensions gracefully', () => {
+        const capabilityData = {
+            rest: [{ operation: [{ definition: "http://test.com/op" }] }]
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            minimalOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.baseUrl).toBeNull();
+        expect(result.headerParams).toEqual([]);
+        expect(result.responseInfos).toEqual([]);
+        expect(result.methods).toEqual(["POST"]);
+    });
+
+    it('should handle missing parameter array', () => {
+        const capabilityData = {
+            rest: [{ operation: [{ definition: "http://test.com/op" }] }]
+        };
+
+        const operationData = {
+            url: "http://test.com/op",
+            code: "test",
+            extension: []
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            operationData,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.searchParams).toEqual([]);
+    });
+
+    it('should filter out output parameters', () => {
+        const capabilityData = {
+            rest: [{ operation: [{ definition: "http://example.com/OperationDefinition/test" }] }]
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            baseOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.searchParams).toHaveLength(2);
+        expect(result.searchParams.map(p => p.name)).toEqual(["param1", "param2"]);
+    });
+
+    it('should return empty methods array when operation not found in capability statement', () => {
+        const capabilityData = {
+            rest: [{ operation: [{ definition: "http://different.com/op" }] }]
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            minimalOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.methods).toEqual([]);
+    });
+
+    it('should return empty methods array when rest array is empty', () => {
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            minimalCapabilityStatement,
+            minimalOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.methods).toEqual([]);
+    });
+
+    it('should handle missing resourceType for type level invoke', () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            resourceCapabilityStatement,
+            minimalOperationDefinition,
+            fhir.Invoke_Level.type,
+            null
+        );
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'You need a resourceType when invoke level is "type"'
+        );
+        expect(result.methods).toEqual([]);
+        
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle resource not found for type level invoke', () => {
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            resourceCapabilityStatement,
+            minimalOperationDefinition,
+            fhir.Invoke_Level.type,
+            "Medication"
+        );
+
+        expect(result.methods).toEqual([]);
+    });
+
+    it('should handle operation not found in resource', () => {
+        const operationData = {
+            url: "http://notfound.com/op",
+            code: "notfound",
+            parameter: [],
+            extension: []
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            resourceCapabilityStatement,
+            operationData,
+            fhir.Invoke_Level.type,
+            "Patient"
+        );
+
+        expect(result.methods).toEqual([]);
+    });
+
+    it('should handle multiple HTTP methods', () => {
+        const capabilityData = {
+            rest: [{ operation: [{ definition: "http://test.com/op" }] }]
+        };
+
+        const operationData = {
+            url: "http://test.com/op",
+            code: "test",
+            parameter: [],
+            extension: [
+                {
+                    url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                    valueCode: "get"
+                },
+                {
+                    url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                    valueCode: "post"
+                },
+                {
+                    url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                    valueCode: "put"
+                }
+            ]
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            operationData,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.methods).toEqual(["GET", "POST", "PUT"]);
+    });
+
+    it('should handle mixed case HTTP methods', () => {
+        const capabilityData = {
+            rest: [{ operation: [{ definition: "http://test.com/op" }] }]
+        };
+
+        const operationData = {
+            url: "http://test.com/op",
+            code: "test",
+            parameter: [],
+            extension: [
+                {
+                    url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                    valueCode: "GeT"
+                },
+                {
+                    url: "https://gematik.de/fhir/ti/StructureDefinition/extension-http-method",
+                    valueCode: "PoSt"
+                }
+            ]
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            operationData,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.methods).toEqual(["GET", "POST"]);
+    });
+
+    it('should merge local and global headers correctly', () => {
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            baseCapabilityStatement,
+            baseOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.headerParams).toHaveLength(2);
+        expect(result.headerParams[0]).toHaveProperty("name", "X-Custom");
+        expect(result.headerParams[1]).toHaveProperty("name", "Authorization");
+    });
+
+    it('should handle missing operation extension', () => {
+        const capabilityData = {
+            rest: [
+                {
+                    operation: [
+                        { definition: "http://test.com/op", name: "test" }
+                    ]
+                }
+            ]
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            minimalOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.headerParams).toEqual([]);
+        expect(result.responseInfos).toEqual([]);
+    });
+
+    it('should handle instance level invoke', () => {        
+        const operationData = {
+            url: "http://example.com/OperationDefinition/validate",
+            code: "instance-test",
+            parameter: [],
+            extension: []
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            resourceCapabilityStatement,
+            operationData,
+            fhir.Invoke_Level.instance,
+            "Patient"
+        );
+
+        expect(result.code).toBe("instance-test");
+    });
+
+    it('should handle empty formats array', () => {
+        const capabilityData = {
+            format: [],
+            rest: [{ operation: [{ definition: "http://test.com/op" }] }]
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            minimalOperationDefinition,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.formats).toEqual([]);
+    });
+
+    it('should handle parameters with all fields present', () => {
+        const capabilityData = {
+            rest: [{ operation: [{ definition: "http://test.com/op" }] }]
+        };
+
+        const operationData = {
+            url: "http://test.com/op",
+            code: "test",
+            parameter: [
+                {
+                    name: "fullParam",
+                    type: "CodeableConcept",
+                    use: "in",
+                    documentation: "A fully documented parameter"
+                }
+            ],
+            extension: []
+        };
+
+        const result = fhir.parseFhirOperationCapabilityStatement(
+            capabilityData,
+            operationData,
+            fhir.Invoke_Level.system,
+            null
+        );
+
+        expect(result.searchParams[0]).toEqual({
+            name: "fullParam",
+            type: "CodeableConcept",
+            documentation: "A fully documented parameter"
+        });
+    });
+});
