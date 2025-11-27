@@ -1,5 +1,4 @@
 import apiDoc from '../src/api.doc.js';
-const { parseExampleDivs } = apiDoc;
 
 jest.mock('../css/ig.apidoc.gematik.css', () => ({}));
 
@@ -16,11 +15,11 @@ describe('parseExampleDivs', () => {
     });
 
     it('should return null for null container', () => {
-        expect(parseExampleDivs(null)).toBeNull();
+        expect(apiDoc.parseExampleDivs(null)).toBeNull();
     });
 
     it('should return empty array for empty container', () => {
-        expect(parseExampleDivs(container)).toEqual([]);
+        expect(apiDoc.parseExampleDivs(container)).toEqual([]);
     });
 
     it('should parse div with data attributes and innerHTML', () => {
@@ -30,7 +29,7 @@ describe('parseExampleDivs', () => {
         div.innerHTML = '{"key": "value"}';
         container.appendChild(div);
 
-        const result = parseExampleDivs(container);
+        const result = apiDoc.parseExampleDivs(container);
         expect(result).toEqual([{
             name: 'test',
             type: 'json',
@@ -46,7 +45,7 @@ describe('parseExampleDivs', () => {
         div.setAttribute('data-url', 'http://example.com/data.xml');
         container.appendChild(div);
 
-        const result = parseExampleDivs(container);
+        const result = apiDoc.parseExampleDivs(container);
         expect(result).toEqual([{
             name: 'test',
             type: 'xml',
@@ -63,7 +62,7 @@ describe('parseExampleDivs', () => {
         div.innerHTML = '<div>test</div>';
         container.appendChild(div);
 
-        const result = parseExampleDivs(container);
+        const result = apiDoc.parseExampleDivs(container);
         expect(result).toEqual([{
             name: 'test',
             type: 'html',
@@ -85,7 +84,7 @@ describe('parseExampleDivs', () => {
 
         container.append(div1, div2);
 
-        const result = parseExampleDivs(container);
+        const result = apiDoc.parseExampleDivs(container);
         expect(result).toEqual([
             {
                 name: 'test1',
@@ -109,7 +108,7 @@ describe('parseExampleDivs', () => {
         div.innerHTML = '\n  {"key": "value"}  \n';
         container.appendChild(div);
 
-        const result = parseExampleDivs(container);
+        const result = apiDoc.parseExampleDivs(container);
         expect(result).toEqual([{
             name: 'test',
             type: 'json',
@@ -125,7 +124,7 @@ describe('parseExampleDivs', () => {
         div.innerHTML = '';
         container.appendChild(div);
 
-        const result = parseExampleDivs(container);
+        const result = apiDoc.parseExampleDivs(container);
         expect(result).toEqual([{
             name: 'test',
             type: 'json',
@@ -145,7 +144,75 @@ describe('parseExampleDivs', () => {
 
         container.append(div1, div2);
 
-        const result = parseExampleDivs(container);
+        const result = apiDoc.parseExampleDivs(container);
         expect(result).toEqual([]);
+    });
+});
+
+describe('parseValueDivs', () => {
+    let container;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(container);
+    });
+
+    it('should return null for null container', () => {
+        expect(apiDoc.parseValueDivs(null)).toBeNull();
+    });
+
+    it('should return empty array for empty container', () => {
+        expect(apiDoc.parseValueDivs(container)).toEqual([]);
+    });
+
+    it('should return empty array for container with no matching divs', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-other', 'value');
+        container.appendChild(div);
+        expect(apiDoc.parseValueDivs(container)).toEqual([]);
+    });
+
+    it('should parse single div with data-value', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-value', 'test-value');
+        container.appendChild(div);
+        expect(apiDoc.parseValueDivs(container)).toEqual(['test-value']);
+    });
+
+    it('should parse multiple divs with data-value', () => {
+        const div1 = document.createElement('div');
+        div1.setAttribute('data-value', 'value1');
+        const div2 = document.createElement('div');
+        div2.setAttribute('data-value', 'value2');
+        container.append(div1, div2);
+        expect(apiDoc.parseValueDivs(container)).toEqual(['value1', 'value2']);
+    });
+
+    it('should handle empty data-value as empty string', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-value', '');
+        container.appendChild(div);
+        expect(apiDoc.parseValueDivs(container)).toEqual(['']);
+    });
+
+    it('should handle special characters in data-value', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-value', 'special&chars<>"\'');
+        container.appendChild(div);
+        expect(apiDoc.parseValueDivs(container)).toEqual(['special&chars<>"\'']);
+    });
+
+    it('should consider nested divs with data-value', () => {
+        const outerDiv = document.createElement('div');
+        outerDiv.setAttribute('data-value', 'outer');
+        const innerDiv = document.createElement('div');
+        innerDiv.setAttribute('data-value', 'inner');
+        outerDiv.appendChild(innerDiv);
+        container.appendChild(outerDiv);
+        expect(apiDoc.parseValueDivs(container)).toEqual(['outer', 'inner']);
     });
 });
