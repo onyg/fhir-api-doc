@@ -246,8 +246,6 @@ function removeLeadingTabs(text) {
     return text.replace(/^[\t ]+/gm, '');
 }
 
-
-
 const createCopyButton = (data, language = null) => {
     const wrapper = utils.createElement('div', { classes: ['gem-ig-copy-container'] });
     const languageElement = utils.createElement('span', { classes: ['gem-id-code-lang'] })
@@ -576,3 +574,27 @@ function renderCustomApiDocumentation(parent, urlPath, httpMethod, operationId=n
     appendExamples(operationMainBlock, requestExamples, responseExamples);
     appendResponseInfo(operationMainBlock, responseInfos);
 }
+
+export default {
+    parseExampleDivs,
+    parseValueDivs,
+    parseParams,
+    parseResponseInfos,
+    renderCapabilityStatementApiDoc,
+    renderWithOperationDefinition,
+    parseBaseUrl,
+    removeLeadingTabs,
+    createCopyButton,
+    renderApiExample,
+    appendExampleElements,
+    createOperationMainBlock,
+    appendInfoBox,
+    appendHeaderInfo,
+    appendExamples,
+    appendResponseInfo,
+    appendSearchParameters,
+    renderCapabilityStatementResourceApiDocumentation,
+    renderCapabilityStatementOperationApiDocumentation,
+    renderCustomApiDocumentation,
+    ApiType
+};
