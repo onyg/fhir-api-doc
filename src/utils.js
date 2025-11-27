@@ -115,6 +115,7 @@ function toJson(value) {
 }
 
 function removeLeadingSlash(str) {
+    if (!str) return '';
     return str.startsWith('/') ? str.slice(1) : str;
 }
 

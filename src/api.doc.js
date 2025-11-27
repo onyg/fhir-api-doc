@@ -103,72 +103,196 @@ function parseResponseInfos(container) {
     });
 }
 
+function extractApiConfig(div) {
+    return {
+        apiType: div.getAttribute('data-api-type') || ApiType.CUSTOM,
+        resourceType: div.getAttribute('data-api-fhir-resource-type'),
+        interaction: div.getAttribute('data-api-fhir-interaction'),
+        operationId: div.getAttribute('data-api-operation-id'),
+        urlPath: div.getAttribute('data-api-url-path'),
+        invokeLevel: div.getAttribute('data-api-fhir-invoke-level'),
+        httpMethod: div.getAttribute('data-api-method'),
+    }
+}
 
+function extractCapabilityStatement(div) {
+    const container = div.querySelector('#CapabilityStatement, #Capability-Statement, #capability-statement');
+    if (!container) return { data: null, url: null };
+
+    const url = container.getAttribute('data-url');
+    const data = utils.isJson(container.textContent) ? container.textContent : null;
+
+    return { data, url };
+}
+
+function extractOperationDefinition(div) {
+    const container = div.querySelector('#OperationDefinition, #Operation-Definition, #operation-definition');
+    if (!container) return { data: null, url: null };
+
+    const url = container.getAttribute('data-url');
+    const data = utils.isJson(container.textContent) ? container.textContent : null;
+
+    return { data, url };
+}
+
+function extractApiContent(div) {
+    const descriptionDiv = div.querySelector('#description, #Description');
+    const description = descriptionDiv?.innerHTML?.trim() ?? '';
+
+    const capabilityStatement = extractCapabilityStatement(div);
+    const operationDefinition = extractOperationDefinition(div);
+
+    return {
+        description,
+        capabilityStatement,
+        operationDefinition,
+        formats: parseValueDivs(div.querySelector('#formats, #Formats')),
+        responseExamples: parseExampleDivs(div.querySelector('#response-examples, #Response-Examples, #ResponseExamples')),
+        requestExamples: parseExampleDivs(div.querySelector('#request-examples, #Request-Examples, #RequestExamples')),
+        headerParams: parseParams(div.querySelector('#header-parameters, #Header-Parameters, #HeaderParameters')),
+        searchParams: parseParams(div.querySelector('#search-parameters, #Search-Parameters, #SearchParameters')),
+        responseInfos: parseResponseInfos(div.querySelector('#responses, #Responses'))
+    };
+}
+
+function renderApiDocumentation(div, config, content) {
+    if (config.apiType === ApiType.FHIRResource) {
+        renderFHIRResourceApi(div, {
+            capabilityStatement: content.capabilityStatement,
+            resourceType: config.resourceType,
+            interaction: config.interaction,
+            operationId: config.operationId,
+            urlPath: config.urlPath,
+            description: content.description,
+            requestExamples: content.requestExamples,
+            responseExamples: content.responseExamples
+        });
+    } else if (config.apiType === ApiType.FHIROperation) {
+        renderFHIROperationApi(div, {
+            capabilityStatement: content.capabilityStatement,
+            operationDefinition: content.operationDefinition,
+            invokeLevel: config.invokeLevel,
+            resourceType: config.resourceType,
+            operationId: config.operationId,
+            urlPath: config.urlPath,
+            description: content.description,
+            requestExamples: content.requestExamples,
+            responseExamples: content.responseExamples
+        });
+    } else if (config.apiType === ApiType.CUSTOM) {
+        renderCustomApi(div, {
+            capabilityStatement: content.capabilityStatement,
+            urlPath: config.urlPath,
+            httpMethod: config.httpMethod,
+            operationId: config.operationId,
+            formats: content.formats,
+            description: content.description,
+            requestExamples: content.requestExamples,
+            responseExamples: content.responseExamples,
+            headerParams: content.headerParams,
+            searchParams: content.searchParams,
+            responseInfos: content.responseInfos
+        });
+    }
+}
+
+function renderFHIRResourceApi(div, params) {
+    const { capabilityStatement, resourceType, interaction, operationId, 
+        urlPath, description, requestExamples, responseExamples } = params;
+    
+    if (capabilityStatement.data && resourceType) {
+        renderCapabilityStatementResourceApiDocumentation(
+            div, 
+            capabilityStatement.data, 
+            resourceType, 
+            interaction, 
+            operationId, 
+            urlPath, 
+            description, 
+            requestExamples, 
+            responseExamples
+        );
+    } else if (capabilityStatement.url && resourceType) {
+        utils.loadData(capabilityStatement.url).then(data => 
+            renderCapabilityStatementResourceApiDocumentation(
+                div, 
+                data, 
+                resourceType, 
+                interaction, 
+                operationId, 
+                urlPath, 
+                description, 
+                requestExamples, 
+                responseExamples
+            )
+        );
+    }
+}
+
+function renderFHIROperationApi(div, params) {
+    const { capabilityStatement, operationDefinition, invokeLevel, resourceType, 
+        operationId, urlPath, description, requestExamples, responseExamples } = params;
+    
+    const renderOperation = (capData) => {
+        renderWithOperationDefinition(
+            div,
+            capData,
+            operationDefinition.data,
+            operationDefinition.url,
+            invokeLevel,
+            resourceType,
+            operationId,
+            urlPath,
+            description,
+            requestExamples,
+            responseExamples
+        );
+    };
+    
+    if (capabilityStatement.data) {
+        renderOperation(capabilityStatement.data);
+    } else if (capabilityStatement.url) {
+        utils.loadData(capabilityStatement.url).then(renderOperation);
+    }
+}
+
+function renderCustomApi(div, params) {
+    const { capabilityStatement, urlPath, httpMethod, operationId, formats, 
+        description, requestExamples, responseExamples, headerParams, 
+        searchParams, responseInfos } = params;
+    
+    const renderCustom = (capData) => {
+        renderCustomApiDocumentation(
+            div, 
+            urlPath, 
+            httpMethod, 
+            operationId, 
+            formats, 
+            description, 
+            requestExamples, 
+            responseExamples, 
+            headerParams, 
+            searchParams, 
+            responseInfos, 
+            capData
+        );
+    };
+    
+    if (!capabilityStatement.url) {
+        renderCustom(capabilityStatement.data);
+    } else {
+        utils.loadData(capabilityStatement.url).then(renderCustom);
+    }
+}
 
 function renderCapabilityStatementApiDoc() {
     const capDivs = document.querySelectorAll('.gematik-apidoc, .gematik-api');
     capDivs.forEach(div => {
-        let _apiType = div.getAttribute('data-api-type');
-        if(!_apiType) {
-            _apiType = ApiType.CUSTOM;
-        }
-        const resourceType = div.getAttribute('data-api-fhir-resource-type');
-        const interaction = div.getAttribute('data-api-fhir-interaction');
-        const operationId = div.getAttribute('data-api-operation-id');
-        const urlPath = div.getAttribute('data-api-url-path');
-        const invokeLevel = div.getAttribute('data-api-fhir-invoke-level');
-        const httpMethod = div.getAttribute('data-api-method');
-
-        const descriptionDiv = div.querySelector('#description, #Description');
-        const description = descriptionDiv?.innerHTML?.trim() ?? '';
-
-        let cap = null;
-        let capUrl = null;
-        const capabilityStatementContainer = div.querySelector('#CapabilityStatement, #Capability-Statement, #capability-statement');
-        if (capabilityStatementContainer) {
-            capUrl = capabilityStatementContainer.getAttribute('data-url');
-            if(utils.isJson(capabilityStatementContainer.textContent)) {
-                cap = capabilityStatementContainer.textContent;
-            }
-        }
-
-        let operationDefinition = null;
-        let operationDefinitionUrl = null;
-        const operationDefinitionContainer = div.querySelector('#OperationDefinition, #Operation-Definition, #operation-definition');
-        if (operationDefinitionContainer) {
-            operationDefinitionUrl = operationDefinitionContainer.getAttribute('data-url');
-            if(utils.isJson(operationDefinitionContainer.textContent)) {
-                operationDefinition = operationDefinitionContainer.textContent;
-            }
-        }
-
-        const formats = parseValueDivs(div.querySelector('#formats, #Formats'));
-        const responseExamples = parseExampleDivs(div.querySelector('#response-examples, #Response-Examples, #ResponseExamples'));
-        const requestExamples = parseExampleDivs(div.querySelector('#request-examples, #Request-Examples, #RequestExamples'));
-        const headerParams = parseParams(div.querySelector('#header-parameters, #Header-Parameters, #HeaderParameters'));
-        const searchParams = parseParams(div.querySelector('#search-parameters,  #Search-Parameters, #SearchParameters'));
-        const responseInfos = parseResponseInfos(div.querySelector('#responses, #Responses'));
+        const config = extractApiConfig(div);
+        const content = extractApiContent(div);
 
         div.innerHTML = "";
-        if (_apiType === ApiType.FHIRResource) {
-            if (cap && resourceType) {
-                renderCapabilityStatementResourceApiDocumentation(div, cap, resourceType, interaction, operationId, urlPath, description, requestExamples, responseExamples);
-            } else if (capUrl && resourceType) {
-                utils.loadData(capUrl).then(data => renderCapabilityStatementResourceApiDocumentation(div, data, resourceType, interaction, operationId, urlPath, description, requestExamples, responseExamples));
-            }
-        } else if (_apiType === ApiType.FHIROperation) {
-            if (cap) {
-                renderWithOperationDefinition(div, cap, operationDefinition, operationDefinitionUrl, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples);
-            } else if (capUrl) {
-                utils.loadData(capUrl).then(data => renderWithOperationDefinition(div, data, operationDefinition, operationDefinitionUrl, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples));
-            }
-        } else if (_apiType === ApiType.CUSTOM) {
-            if (!capUrl) {
-                renderCustomApiDocumentation(div, urlPath, httpMethod, operationId, formats, description, requestExamples, responseExamples, headerParams, searchParams, responseInfos, cap);
-            } else {
-                utils.loadData(capUrl).then(data => renderCustomApiDocumentation(div, urlPath, httpMethod, operationId, formats, description, requestExamples, responseExamples, headerParams, searchParams, responseInfos, data));
-            }
-        }
+        renderApiDocumentation(div, config, content);
     });
 }
 
