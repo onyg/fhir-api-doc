@@ -91,7 +91,7 @@ function parseResponseInfos(container) {
     return divs.map(div => {
         const statusCode = div.getAttribute('data-code');
         const errorCode = div.getAttribute('data-error-code');
-        const description = div.innerHTML;
+        const description = div.innerHTML.trim();
         const responseType = div.getAttribute('data-response-type');
 
         return {

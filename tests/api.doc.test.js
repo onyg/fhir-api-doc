@@ -337,3 +337,161 @@ describe('parseParams', () => {
         }]);
     });
 });
+
+describe('parseResponseInfos', () => {
+    let container;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(container);
+    });
+
+    it('should return empty array for null container', () => {
+        expect(apiDoc.parseResponseInfos(null)).toEqual([]);
+    });
+
+    it('should return empty array for empty container', () => {
+        expect(apiDoc.parseResponseInfos(container)).toEqual([]);
+    });
+
+    it('should parse div with all response info attributes', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-code', '200');
+        div.setAttribute('data-error-code', 'OK');
+        div.setAttribute('data-response-type', 'application/json');
+        div.innerHTML = 'Successful response';
+        container.appendChild(div);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([{
+            statusCode: '200',
+            errorCode: 'OK',
+            description: 'Successful response',
+            responseType: 'application/json'
+        }]);
+    });
+
+    it('should handle missing optional attributes', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-code', '404');
+        div.innerHTML = 'Not found';
+        container.appendChild(div);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([{
+            statusCode: '404',
+            errorCode: null,
+            description: 'Not found',
+            responseType: null
+        }]);
+    });
+
+    it('should handle multiple response info divs', () => {
+        const div1 = document.createElement('div');
+        div1.setAttribute('data-code', '200');
+        div1.setAttribute('data-error-code', 'OK');
+        div1.innerHTML = 'Success';
+
+        const div2 = document.createElement('div');
+        div2.setAttribute('data-code', '400');
+        div2.setAttribute('data-response-type', 'application/json');
+        div2.innerHTML = 'Bad request';
+
+        container.append(div1, div2);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([
+            {
+                statusCode: '200',
+                errorCode: 'OK',
+                description: 'Success',
+                responseType: null
+            },
+            {
+                statusCode: '400',
+                errorCode: null,
+                description: 'Bad request',
+                responseType: 'application/json'
+            }
+        ]);
+    });
+
+    it('should trim description whitespace', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-code', '200');
+        div.innerHTML = '  Success  ';
+        container.appendChild(div);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([{
+            statusCode: '200',
+            errorCode: null,
+            description: 'Success',
+            responseType: null
+        }]);
+    });
+
+    it('should handle empty description as empty string', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-code', '204');
+        div.innerHTML = '';
+        container.appendChild(div);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([{
+            statusCode: '204',
+            errorCode: null,
+            description: '',
+            responseType: null
+        }]);
+    });
+
+    it('should handle special characters in description', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-code', '200');
+        div.innerHTML = 'Response with <tags> & entities';
+        container.appendChild(div);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([{
+            statusCode: '200',
+            errorCode: null,
+            description: 'Response with <tags> &amp; entities</tags>',
+            responseType: null
+        }]);
+    });
+
+    it('should handle numeric status codes', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-code', '500');
+        div.innerHTML = 'Server error';
+        container.appendChild(div);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([{
+            statusCode: '500',
+            errorCode: null,
+            description: 'Server error',
+            responseType: null
+        }]);
+    });
+
+    it('should handle non-numeric status codes', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-code', '4XX');
+        div.innerHTML = 'Client error';
+        container.appendChild(div);
+
+        const result = apiDoc.parseResponseInfos(container);
+        expect(result).toEqual([{
+            statusCode: '4XX',
+            errorCode: null,
+            description: 'Client error',
+            responseType: null
+        }]);
+    });
+});
