@@ -2445,7 +2445,7 @@ describe('parseFhirOperationCapabilityStatement', () => {
             null
         );
 
-        expect(result.methods).toEqual([]);
+        expect(result.methods).toEqual([ "POST" ]); // default response
     });
 
     it('should return empty methods array when rest array is empty', () => {
@@ -2472,7 +2472,7 @@ describe('parseFhirOperationCapabilityStatement', () => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             'You need a resourceType when invoke level is "type"'
         );
-        expect(result.methods).toEqual([]);
+        expect(result.methods).toEqual([ "POST" ]); // default response
         
         consoleErrorSpy.mockRestore();
     });
@@ -2485,7 +2485,7 @@ describe('parseFhirOperationCapabilityStatement', () => {
             "Medication"
         );
 
-        expect(result.methods).toEqual([]);
+        expect(result.methods).toEqual([ "POST" ]); // default response
     });
 
     it('should handle operation not found in resource', () => {
@@ -2503,7 +2503,7 @@ describe('parseFhirOperationCapabilityStatement', () => {
             "Patient"
         );
 
-        expect(result.methods).toEqual([]);
+        expect(result.methods).toEqual([ "POST" ]); // default response
     });
 
     it('should handle multiple HTTP methods', () => {

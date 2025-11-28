@@ -177,9 +177,6 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
     const { rest: rest = [] } = capabilityStatement;
     for (const restEntry of rest) {
         const operation = getOperation(operationDefinition, invokeLevel, restEntry, resourceType)
-        if (!operation) {
-            continue;
-        }
 
         let localHeaders = [];
         let localResponses = [];

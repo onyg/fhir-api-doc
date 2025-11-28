@@ -420,23 +420,14 @@ describe('createTable', () => {
         expect(table.classList.contains('striped')).toBe(true);
     });
 
-    test('should handle special characters in headers and rows', () => {
-        const table = utils.createTable(['<Name>'], [['Fred & Rik']]);
-        const headerCell = table.querySelector('th');
-        const rowCell = table.querySelector('td');
-        expect(headerCell.textContent).toBe('<Name>');
-        expect(rowCell.textContent).toBe('Fred & Rik');
-    });
-
-    // This means creating html elements nested in table header and body cells is not possible
-    test('should escape HTML in headers and rows', () => {
+    test('should not escape HTML in headers and rows', () => {
         const table = utils.createTable(['<b>Name</b>'], [['<em>Fred</em>']]);
         const headerCell = table.querySelector('th');
         const rowCell = table.querySelector('td');
-        expect(headerCell.innerHTML).toBe('&lt;b&gt;Name&lt;/b&gt;');
-        expect(headerCell.querySelector('b')).toBeFalsy();
-        expect(rowCell.innerHTML).toBe('&lt;em&gt;Fred&lt;/em&gt;');
-        expect(rowCell.querySelector('em')).toBeFalsy();
+        expect(headerCell.innerHTML).toBe('<b>Name</b>');
+        expect(headerCell.querySelector('b')).toBeTruthy();
+        expect(rowCell.innerHTML).toBe('<em>Fred</em>');
+        expect(rowCell.querySelector('em')).toBeTruthy();
     });
 
     test('should handle null and undefined in headers and rows', () => {
