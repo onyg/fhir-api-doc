@@ -770,3 +770,345 @@ describe('extractOperationDefinition', () => {
         expect(result.url).toBe('https://example.com/api');
     });
 });
+
+describe('extractApiContent', () => {
+    test('should extract all content when all sections are present', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div id="description">Test description <b>with HTML</b></div>
+            <div id="CapabilityStatement" data-url="https://example.com/cap.json">{"resourceType": "CapabilityStatement"}</div>
+            <div id="OperationDefinition" data-url="https://example.com/op.json">{"resourceType": "OperationDefinition"}</div>
+            <div id="formats">
+                <div data-value="application/json"></div>
+                <div data-value="application/xml"></div>
+            </div>
+            <div id="response-examples">
+                <div data-name="Example 1" data-type="json" data-url="https://example.com/response.json"></div>
+            </div>
+            <div id="request-examples">
+                <div data-name="Request 1" data-type="xml">Some XML</div>
+            </div>
+            <div id="header-parameters">
+                <div data-name="Authorization" data-type="string">Auth header</div>
+            </div>
+            <div id="search-parameters">
+                <div data-name="status" data-type="token">Status param</div>
+            </div>
+            <div id="responses">
+                <div data-code="200" data-error-code="" data-response-type="Success">OK response</div>
+            </div>
+        `;
+
+        const result = apiDoc.extractApiContent(div);
+
+        expect(result.description).toBe('Test description <b>with HTML</b>');
+        expect(result.capabilityStatement.url).toBe('https://example.com/cap.json');
+        expect(result.capabilityStatement.data).toBe('{"resourceType": "CapabilityStatement"}');
+        expect(result.operationDefinition.url).toBe('https://example.com/op.json');
+        expect(result.operationDefinition.data).toBe('{"resourceType": "OperationDefinition"}');
+        expect(result.formats).toEqual(['application/json', 'application/xml']);
+        expect(result.responseExamples).toHaveLength(1);
+        expect(result.requestExamples).toHaveLength(1);
+        expect(result.headerParams).toHaveLength(1);
+        expect(result.searchParams).toHaveLength(1);
+        expect(result.responseInfos).toHaveLength(1);
+    });
+
+    test('should return empty string for missing description', () => {
+        const div = document.createElement('div');
+        const result = apiDoc.extractApiContent(div);
+        expect(result.description).toBe('');
+    });
+
+    test('should handle description with various ID casings', () => {
+        const testCases = ['description', 'Description'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `<div id="${id}">Test content</div>`;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.description).toBe('Test content');
+        });
+    });
+
+    test('should handle CapabilityStatement with various ID casings', () => {
+        const testCases = ['CapabilityStatement', 'Capability-Statement', 'capability-statement'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `<div id="${id}" data-url="test.json">{"test": true}</div>`;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.capabilityStatement.data).toBe('{"test": true}');
+            expect(result.capabilityStatement.url).toBe('test.json');
+        });
+    });
+
+    test('should handle OperationDefinition with various ID casings', () => {
+        const testCases = ['OperationDefinition', 'Operation-Definition', 'operation-definition'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `<div id="${id}" data-url="op.json">{"operation": true}</div>`;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.operationDefinition.data).toBe('{"operation": true}');
+            expect(result.operationDefinition.url).toBe('op.json');
+        });
+    });
+
+    test('should handle formats with various ID casings', () => {
+        const testCases = ['formats', 'Formats'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div id="${id}">
+                    <div data-value="json"></div>
+                    <div data-value="xml"></div>
+                </div>
+            `;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.formats).toEqual(['json', 'xml']);
+        });
+    });
+
+    test('should handle response-examples with various ID casings', () => {
+        const testCases = ['response-examples', 'Response-Examples', 'ResponseExamples'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div id="${id}">
+                    <div data-name="Ex1" data-type="json">data</div>
+                </div>
+            `;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.responseExamples).toHaveLength(1);
+        });
+    });
+
+    test('should handle request-examples with various ID casings', () => {
+        const testCases = ['request-examples', 'Request-Examples', 'RequestExamples'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div id="${id}">
+                    <div data-name="Ex1" data-type="json">data</div>
+                </div>
+            `;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.requestExamples).toHaveLength(1);
+        });
+    });
+
+    test('should handle header-parameters with various ID casings', () => {
+        const testCases = ['header-parameters', 'Header-Parameters', 'HeaderParameters'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div id="${id}">
+                    <div data-name="Auth" data-type="string">desc</div>
+                </div>
+            `;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.headerParams).toHaveLength(1);
+        });
+    });
+
+    test('should handle search-parameters with various ID casings', () => {
+        const testCases = ['search-parameters', 'Search-Parameters', 'SearchParameters'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div id="${id}">
+                    <div data-name="status" data-type="token">desc</div>
+                </div>
+            `;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.searchParams).toHaveLength(1);
+        });
+    });
+
+    test('should handle responses with various ID casings', () => {
+        const testCases = ['responses', 'Responses'];
+        
+        testCases.forEach(id => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div id="${id}">
+                    <div data-code="200">OK</div>
+                </div>
+            `;
+            const result = apiDoc.extractApiContent(div);
+            expect(result.responseInfos).toHaveLength(1);
+        });
+    });
+
+    test('should return null for missing formats', () => {
+        const div = document.createElement('div');
+        const result = apiDoc.extractApiContent(div);
+        expect(result.formats).toBeNull();
+    });
+
+    test('should return null for missing examples', () => {
+        const div = document.createElement('div');
+        const result = apiDoc.extractApiContent(div);
+        expect(result.responseExamples).toBeNull();
+        expect(result.requestExamples).toBeNull();
+    });
+
+    test('should return empty array for missing parameters', () => {
+        const div = document.createElement('div');
+        const result = apiDoc.extractApiContent(div);
+        expect(result.headerParams).toEqual([]);
+        expect(result.searchParams).toEqual([]);
+    });
+
+    test('should return empty array for missing responses', () => {
+        const div = document.createElement('div');
+        const result = apiDoc.extractApiContent(div);
+        expect(result.responseInfos).toEqual([]);
+    });
+
+    test('should handle CapabilityStatement with non-JSON content', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="CapabilityStatement">Not JSON content</div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.capabilityStatement.data).toBeNull();
+        expect(result.capabilityStatement.url).toBeNull();
+    });
+
+    test('should handle OperationDefinition with non-JSON content', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="OperationDefinition">Not JSON content</div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.operationDefinition.data).toBeNull();
+        expect(result.operationDefinition.url).toBeNull();
+    });
+
+    test('should handle CapabilityStatement with only URL', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="CapabilityStatement" data-url="https://example.com/cap.json"></div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.capabilityStatement.data).toBeNull();
+        expect(result.capabilityStatement.url).toBe('https://example.com/cap.json');
+    });
+
+    test('should handle OperationDefinition with only URL', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="OperationDefinition" data-url="https://example.com/op.json"></div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.operationDefinition.data).toBeNull();
+        expect(result.operationDefinition.url).toBe('https://example.com/op.json');
+    });
+
+    test('should trim whitespace from description', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="description">  
+            Test description with whitespace  
+        </div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.description).toBe('Test description with whitespace');
+    });
+
+    test('should handle empty description div', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="description"></div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.description).toBe('');
+    });
+
+    test('should handle description with only whitespace', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="description">   </div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.description).toBe('');
+    });
+
+    test('should handle empty formats container', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="formats"></div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.formats).toEqual([]);
+    });
+
+    test('should handle empty examples containers', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div id="response-examples"></div>
+            <div id="request-examples"></div>
+        `;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.responseExamples).toEqual([]);
+        expect(result.requestExamples).toEqual([]);
+    });
+
+    test('should handle empty parameters containers', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div id="header-parameters"></div>
+            <div id="search-parameters"></div>
+        `;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.headerParams).toEqual([]);
+        expect(result.searchParams).toEqual([]);
+    });
+
+    test('should handle empty responses container', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="responses"></div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.responseInfos).toEqual([]);
+    });
+
+    test('should handle malformed JSON in CapabilityStatement', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="CapabilityStatement">{invalid json}</div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.capabilityStatement.data).toBeNull();
+    });
+
+    test('should preserve HTML entities in description', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div id="description">&lt;b&gt;Bold&lt;/b&gt; &amp; special</div>`;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.description).toContain('&lt;');
+        expect(result.description).toContain('&amp;');
+    });
+
+    test('should handle nested HTML in description', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div id="description">
+                <p>Paragraph 1</p>
+                <ul>
+                    <li>Item 1</li>
+                    <li>Item 2</li>
+                </ul>
+            </div>
+        `;
+        const result = apiDoc.extractApiContent(div);
+        expect(result.description).toContain('<p>');
+        expect(result.description).toContain('<ul>');
+        expect(result.description).toContain('<li>');
+    });
+
+    test('should return default structure when div is empty', () => {
+        const div = document.createElement('div');
+        const result = apiDoc.extractApiContent(div);
+        
+        expect(result).toEqual({
+            description: '',
+            capabilityStatement: { data: null, url: null },
+            operationDefinition: { data: null, url: null },
+            formats: null,
+            responseExamples: null,
+            requestExamples: null,
+            headerParams: [],
+            searchParams: [],
+            responseInfos: []
+        });
+    });
+});

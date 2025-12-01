@@ -707,6 +707,7 @@ export default {
     extractApiConfig,
     extractCapabilityStatement,
     extractOperationDefinition,
+    extractApiContent,
     renderCapabilityStatementApiDoc,
     renderWithOperationDefinition,
     parseBaseUrl,
