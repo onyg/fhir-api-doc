@@ -705,6 +705,7 @@ export default {
     parseParams,
     parseResponseInfos,
     extractApiConfig,
+    extractCapabilityStatement,
     renderCapabilityStatementApiDoc,
     renderWithOperationDefinition,
     parseBaseUrl,

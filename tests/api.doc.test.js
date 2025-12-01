@@ -1,4 +1,6 @@
 import apiDoc from '../src/api.doc.js';
+import utils from '../src/utils.js';
+
 
 jest.mock('../css/ig.apidoc.gematik.css', () => ({}));
 
@@ -552,5 +554,112 @@ describe('extractApiConfig', () => {
         expect(result.urlPath).toBe('/api/test');
         expect(result.httpMethod).toBe('POST');
         expect(result.resourceType).toBeNull();
+    });
+});
+
+describe('extractCapabilityStatement', () => {
+    let div;
+
+    beforeEach(() => {
+        div = document.createElement('div');
+        jest.spyOn(utils, 'isJson');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test('returns null data and url when container is not found', () => {
+        const result = apiDoc.extractCapabilityStatement(div);
+    
+        expect(result).toEqual({ data: null, url: null });
+    });
+
+    test('extracts data and url from #CapabilityStatement', () => {
+        const container = document.createElement('div');
+        container.id = 'CapabilityStatement';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '{"resourceType": "CapabilityStatement"}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractCapabilityStatement(div);
+    
+        expect(result.data).toBe('{"resourceType": "CapabilityStatement"}');
+        expect(result.url).toBe('https://example.com/api');
+    });
+
+    test('handles #Capability-Statement id variant', () => {
+        const container = document.createElement('div');
+        container.id = 'Capability-Statement';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '{"test": true}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractCapabilityStatement(div);
+    
+        expect(result.data).toBe('{"test": true}');
+        expect(result.url).toBe('https://example.com/api');
+    });
+
+    test('handles #capability-statement id variant', () => {
+        const container = document.createElement('div');
+        container.id = 'capability-statement';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '{}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractCapabilityStatement(div);
+    
+        expect(result.data).toBe('{}');
+    });
+
+    test('returns null data when content is not valid JSON', () => {
+        const container = document.createElement('div');
+        container.id = 'CapabilityStatement';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = 'not json';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(false);
+
+        const result = apiDoc.extractCapabilityStatement(div);
+    
+        expect(result.data).toBeNull();
+        expect(result.url).toBe('https://example.com/api');
+    });
+
+    test('handles missing data-url attribute', () => {
+        const container = document.createElement('div');
+        container.id = 'CapabilityStatement';
+        container.textContent = '{"test": true}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractCapabilityStatement(div);
+    
+        expect(result.data).toBe('{"test": true}');
+        expect(result.url).toBeNull();
+    });
+
+    test('handles empty textContent', () => {
+        const container = document.createElement('div');
+        container.id = 'CapabilityStatement';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(false);
+
+        const result = apiDoc.extractCapabilityStatement(div);
+    
+        expect(result.data).toBeNull();
+        expect(result.url).toBe('https://example.com/api');
     });
 });
