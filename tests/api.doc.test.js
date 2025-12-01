@@ -495,3 +495,62 @@ describe('parseResponseInfos', () => {
         }]);
     });
 });
+
+describe('extractApiConfig', () => {
+    test('should extract all attributes when present', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-api-type', 'FHIR');
+        div.setAttribute('data-api-fhir-resource-type', 'Patient');
+        div.setAttribute('data-api-fhir-interaction', 'read');
+        div.setAttribute('data-api-operation-id', 'op123');
+        div.setAttribute('data-api-url-path', '/api/v1/patients');
+        div.setAttribute('data-api-fhir-invoke-level', 'instance');
+        div.setAttribute('data-api-method', 'GET');
+
+        const result = apiDoc.extractApiConfig(div);
+
+        expect(result).toEqual({
+            apiType: 'FHIR',
+            resourceType: 'Patient',
+            interaction: 'read',
+            operationId: 'op123',
+            urlPath: '/api/v1/patients',
+            invokeLevel: 'instance',
+            httpMethod: 'GET',
+        });
+    });
+
+    test('should use default ApiType.CUSTOM when data-api-type is missing', () => {
+        const div = document.createElement('div');
+
+        const result = apiDoc.extractApiConfig(div);
+
+        expect(result.apiType).toBe(apiDoc.ApiType.CUSTOM);
+    });
+
+    test('should return null for missing attributes except apiType', () => {
+        const div = document.createElement('div');
+
+        const result = apiDoc.extractApiConfig(div);
+
+        expect(result.resourceType).toBeNull();
+        expect(result.interaction).toBeNull();
+        expect(result.operationId).toBeNull();
+        expect(result.urlPath).toBeNull();
+        expect(result.invokeLevel).toBeNull();
+        expect(result.httpMethod).toBeNull();
+    });
+
+    test('should handle mix of present and missing attributes', () => {
+        const div = document.createElement('div');
+        div.setAttribute('data-api-url-path', '/api/test');
+        div.setAttribute('data-api-method', 'POST');
+
+        const result = apiDoc.extractApiConfig(div);
+
+        expect(result.apiType).toBe(apiDoc.ApiType.CUSTOM);
+        expect(result.urlPath).toBe('/api/test');
+        expect(result.httpMethod).toBe('POST');
+        expect(result.resourceType).toBeNull();
+    });
+});
