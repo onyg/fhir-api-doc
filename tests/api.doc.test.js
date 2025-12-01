@@ -663,3 +663,110 @@ describe('extractCapabilityStatement', () => {
         expect(result.url).toBe('https://example.com/api');
     });
 });
+
+describe('extractOperationDefinition', () => {
+    let div;
+
+    beforeEach(() => {
+        div = document.createElement('div');
+        jest.spyOn(utils, 'isJson');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    test('returns null data and url when container is not found', () => {
+        const result = apiDoc.extractOperationDefinition(div);
+    
+        expect(result).toEqual({ data: null, url: null });
+    });
+
+    test('extracts data and url from #OperationDefinition', () => {
+        const container = document.createElement('div');
+        container.id = 'OperationDefinition';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '{"resourceType": "OperationDefinition"}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractOperationDefinition(div);
+    
+        expect(result.data).toBe('{"resourceType": "OperationDefinition"}');
+        expect(result.url).toBe('https://example.com/api');
+    });
+
+    test('handles #Operation-Definition id variant', () => {
+        const container = document.createElement('div');
+        container.id = 'Operation-Definition';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '{"test": true}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractOperationDefinition(div);
+    
+        expect(result.data).toBe('{"test": true}');
+        expect(result.url).toBe('https://example.com/api');
+    });
+
+    test('handles #operation-definition id variant', () => {
+        const container = document.createElement('div');
+        container.id = 'operation-definition';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '{}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractOperationDefinition(div);
+    
+        expect(result.data).toBe('{}');
+    });
+
+    test('returns null data when content is not valid JSON', () => {
+        const container = document.createElement('div');
+        container.id = 'OperationDefinition';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = 'not json';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(false);
+
+        const result = apiDoc.extractOperationDefinition(div);
+    
+        expect(result.data).toBeNull();
+        expect(result.url).toBe('https://example.com/api');
+    });
+
+    test('handles missing data-url attribute', () => {
+        const container = document.createElement('div');
+        container.id = 'OperationDefinition';
+        container.textContent = '{"test": true}';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(true);
+
+        const result = apiDoc.extractOperationDefinition(div);
+    
+        expect(result.data).toBe('{"test": true}');
+        expect(result.url).toBeNull();
+    });
+
+    test('handles empty textContent', () => {
+        const container = document.createElement('div');
+        container.id = 'OperationDefinition';
+        container.setAttribute('data-url', 'https://example.com/api');
+        container.textContent = '';
+        div.appendChild(container);
+
+        utils.isJson.mockReturnValue(false);
+
+        const result = apiDoc.extractOperationDefinition(div);
+    
+        expect(result.data).toBeNull();
+        expect(result.url).toBe('https://example.com/api');
+    });
+});
