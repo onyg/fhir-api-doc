@@ -1305,7 +1305,7 @@ describe('createCopyButton', () => {
         const langElement = result.querySelector('.gem-id-code-lang');
         
         expect(langElement).not.toBeNull();
-        expect(langElement.innerText).toBeUndefined();
+        expect(langElement.innerText).toBe("");
     });
 
     it('should copy data to clipboard when button is clicked', async () => {
@@ -1401,4 +1401,373 @@ describe('createCopyButton', () => {
     });
 });
 
+describe('renderApiExample', () => {
+    let parent, buttonParent, exampleList, buttonList;
 
+    beforeEach(() => {
+        parent = document.createElement('div');
+        buttonParent = document.createElement('div');
+        exampleList = [];
+        buttonList = [];
+        
+        // Mock navigator.clipboard
+        Object.assign(navigator, {
+            clipboard: {
+                writeText: jest.fn(() => Promise.resolve())
+            }
+        });
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should render a JSON example', () => {
+        const example = {
+            name: 'Example JSON',
+            type: 'json',
+            render: 'json'
+        };
+        const data = '{"key": "value"}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        expect(buttonList).toHaveLength(1);
+        expect(parent.children).toHaveLength(1);
+        expect(buttonParent.children).toHaveLength(1);
+        
+        const preElement = parent.querySelector('pre');
+        expect(preElement).toBeTruthy();
+        expect(preElement.style.display).toBe('none');
+        
+        const codeElement = preElement.querySelector('code');
+        expect(codeElement).toBeTruthy();
+    });
+
+    it('should render an XML example', () => {
+        const example = {
+            name: 'Example XML',
+            type: 'xml',
+            render: 'xml'
+        };
+        const data = '<root><child>value</child></root>';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        expect(buttonList).toHaveLength(1);
+        
+        const preElement = parent.querySelector('pre');
+        expect(preElement).toBeTruthy();
+        const codeElement = preElement.querySelector('code');
+        expect(codeElement).toBeTruthy();
+    });
+
+    it('should render HTML example without syntax highlighting', () => {
+        const example = {
+            name: 'HTML Example',
+            type: 'html',
+            render: 'HTML'
+        };
+        const data = '<div>Hello World</div>';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        const htmlExample = parent.querySelector('.html-example');
+        expect(htmlExample).toBeTruthy();
+        expect(htmlExample.innerHTML).toBe(data);
+    });
+
+    it('should render IG-FRAGMENT by extracting innerText', () => {
+        const example = {
+            name: 'Fragment Example',
+            type: 'json',
+            render: 'IG-FRAGMENT'
+        };
+        const data = '<div>{ key: "Some value" }</div>';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        const preElement = parent.querySelector('pre');
+        expect(preElement).toBeTruthy();
+        const codeElement = preElement.querySelector('code');
+        expect(codeElement.textContent).toBe('{ key: "Some value" }')
+    });
+
+    it('should use type as render type when render attribute is missing', () => {
+        const example = {
+            name: 'No Render Attribute',
+            type: 'json'
+        };
+        const data = '{"test": true}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        expect(buttonList).toHaveLength(1);
+        const preElement = parent.querySelector('pre');
+        expect(preElement).toBeTruthy();
+        expect(preElement.querySelector('code')).toBeTruthy();
+    });
+
+    it('should create a button with correct labels', () => {
+        const example = {
+            name: 'Button Test',
+            type: 'JSON',
+            render: 'json'
+        };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        const button = buttonParent.querySelector('button.example');
+        expect(button).toBeTruthy();
+        expect(button.querySelector('.label').textContent).toBe('JSON');
+        expect(button.textContent).toContain('Button Test');
+    });
+
+    it('should toggle example visibility when button is clicked', () => {
+        const example = {
+            name: 'Toggle Test',
+            type: 'json'
+        };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        const button = buttonParent.querySelector('button');
+        const preElement = parent.querySelector('pre');
+
+        expect(preElement.style.display).toBe('none');
+
+        button.click();
+        expect(preElement.style.display).toBe('block');
+        expect(button.classList.contains('active-button')).toBe(true);
+
+        button.click();
+        expect(preElement.style.display).toBe('none');
+        expect(button.classList.contains('active-button')).toBe(false);
+    });
+
+    it('should hide other examples when one is shown', () => {
+        const example1 = { name: 'Example 1', type: 'json' };
+        const example2 = { name: 'Example 2', type: 'xml' };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example1, data, exampleList, buttonList);
+        apiDoc.renderApiExample(parent, buttonParent, example2, data, exampleList, buttonList);
+
+        const buttons = buttonParent.querySelectorAll('button');
+        const examples = parent.querySelectorAll('pre');
+
+        buttons[0].click();
+        expect(examples[0].style.display).toBe('block');
+        expect(examples[1].style.display).toBe('none');
+        expect(buttons[0].classList.contains('active-button')).toBe(true);
+        expect(buttons[1].classList.contains('active-button')).toBe(false);
+
+        buttons[1].click();
+        expect(examples[0].style.display).toBe('none');
+        expect(examples[1].style.display).toBe('block');
+        expect(buttons[0].classList.contains('active-button')).toBe(false);
+        expect(buttons[1].classList.contains('active-button')).toBe(true);
+    });
+
+    it('should include a copy button with correct functionality', async () => {
+        const example = {
+            name: 'Copy Test',
+            type: 'json'
+        };
+        const data = '{"copy": "me"}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        const copyButton = parent.querySelector('.gem-ig-copy-button-wrapper button');
+        expect(copyButton).toBeTruthy();
+
+        await copyButton.click();
+        
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith(data);
+    });
+
+    it('should handle case-insensitive render types', () => {
+        const examples = [
+            { name: 'Lower', type: 'json', render: 'html' },
+            { name: 'Upper', type: 'json', render: 'HTML' },
+            { name: 'Mixed', type: 'json', render: 'HtMl' }
+        ];
+        const data = '<div>Test</div>';
+
+        examples.forEach(example => {
+            const localParent = document.createElement('div');
+            const localButtonParent = document.createElement('div');
+            const localList = [];
+            const localButtonList = [];
+
+            apiDoc.renderApiExample(localParent, localButtonParent, example, data, localList, localButtonList);
+
+            const htmlExample = localParent.querySelector('.html-example');
+            expect(htmlExample).toBeTruthy();
+        });
+    });
+
+    it('should handle empty data string', () => {
+        const example = {
+            name: 'Empty',
+            type: 'json'
+        };
+        const data = '';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        expect(buttonList).toHaveLength(1);
+        
+        const preElement = parent.querySelector('pre');
+        expect(preElement).toBeTruthy();
+    });
+
+    it('should handle special characters in data', () => {
+        const example = {
+            name: 'Special Chars',
+            type: 'json'
+        };
+        const data = '{"special": "<>&\\"\'"}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        const codeElement = parent.querySelector('code');
+        expect(codeElement).toBeTruthy();
+    });
+
+    it('should convert type to uppercase in button label', () => {
+        const example = {
+            name: 'Lowercase Type',
+            type: 'json'
+        };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        const label = buttonParent.querySelector('.label');
+        expect(label.textContent).toBe('JSON');
+    });
+
+    it('should handle IG-FRAGMENT with complex HTML structure', () => {
+        const example = {
+            name: 'Complex Fragment',
+            type: 'json',
+            render: 'ig-fragment'
+        };
+        const data = '<div><span>Nested</span><p>Content</p></div>';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        const preElement = parent.querySelector('pre');
+        expect(preElement).toBeTruthy();
+    });
+
+    it('should handle missing type property gracefully', () => {
+        const example = {
+            name: 'No Type'
+        };
+        const data = '{}';
+
+        expect(() => {
+            apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+        }).not.toThrow();
+        
+        expect(exampleList).toHaveLength(1);
+    });
+
+    it('should handle null render property', () => {
+        const example = {
+            name: 'Null Render',
+            type: 'json',
+            render: null
+        };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+    });
+
+    it('should handle undefined render property', () => {
+        const example = {
+            name: 'Undefined Render',
+            type: 'json',
+            render: undefined
+        };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+    });
+
+    it('should add language label to copy container', () => {
+        const example = {
+            name: 'Language Label',
+            type: 'JSON'
+        };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        const languageLabel = parent.querySelector('.gem-id-code-lang');
+        expect(languageLabel).toBeTruthy();
+        expect(languageLabel.innerText).toBe('json');
+    });
+
+    it('should store example and button in provided arrays', () => {
+        const example = {
+            name: 'Array Test',
+            type: 'json'
+        };
+        const data = '{}';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        expect(buttonList).toHaveLength(1);
+        expect(exampleList[0]).toBeTruthy();
+        expect(buttonList[0]).toBeTruthy();
+    });
+
+    it('should handle whitespace-only data', () => {
+        const example = {
+            name: 'Whitespace',
+            type: 'json'
+        };
+        const data = '   \n\t  ';
+
+        apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+
+        expect(exampleList).toHaveLength(1);
+        const preElement = parent.querySelector('pre');
+        expect(preElement).toBeTruthy();
+    });
+
+    it('should handle multiple examples added sequentially', () => {
+        const examples = [
+            { name: 'First', type: 'json' },
+            { name: 'Second', type: 'xml' },
+            { name: 'Third', type: 'json' }
+        ];
+        const data = '{}';
+
+        examples.forEach(example => {
+            apiDoc.renderApiExample(parent, buttonParent, example, data, exampleList, buttonList);
+        });
+
+        expect(exampleList).toHaveLength(3);
+        expect(buttonList).toHaveLength(3);
+        expect(parent.children).toHaveLength(3);
+        expect(buttonParent.children).toHaveLength(3);
+    });
+});

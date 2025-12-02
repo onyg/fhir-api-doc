@@ -400,22 +400,23 @@ const createCopyButton = (data, language = null) => {
 };
 
 const renderApiExample = (parent, buttonParent, example, data, exampleList, buttonList) => {
-    let renderType = example.render?.toLowerCase() || example.type?.toLowerCase() ;
+    const exampleType = example.type?.toLowerCase() || 'html'
+    let renderType = example.render?.toLowerCase() || exampleType;
     const exampleContainer = utils.createElement('pre', { attributes: { style: 'display: none' } });
 
     let content = data;
     if (renderType.toUpperCase() == "IG-FRAGMENT") {
-        content = utils.createElement('div', {classes:['html-example'], innerHTML: data}).innerText;
+        content = utils.createElement('div', {classes:['html-example'], innerHTML: data}).innerText || '';
     }
     // The Copy Button
-    exampleContainer.appendChild(createCopyButton(content, example.type.toLowerCase()));
+    exampleContainer.appendChild(createCopyButton(content, exampleType.toLowerCase()));
     if (renderType.toUpperCase() == "HTML") {
         exampleContainer.appendChild(
             utils.createElement('div', {classes:['html-example'], innerHTML: content})
         );
     } else {
         const view = utils.createElement('code', {
-            innerHTML: hljs.highlight(content, { language: example.type.toLowerCase() }).value
+            innerHTML: hljs.highlight(content, { language: exampleType.toLowerCase()}).value
         });
         exampleContainer.appendChild(view);
     }
@@ -424,7 +425,7 @@ const renderApiExample = (parent, buttonParent, example, data, exampleList, butt
     const toggleButton = utils.createElement('button', {
         classes: ['example', 'inline-button'],
         children: [
-            utils.createElement('span', { classes: ['label'], innerHTML: example.type.toUpperCase() }),
+            utils.createElement('span', { classes: ['label'], innerHTML: exampleType.toUpperCase()}),
             utils.createElement('span', { innerHTML: example.name })
         ]
     });

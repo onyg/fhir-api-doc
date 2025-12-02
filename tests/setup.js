@@ -15,3 +15,13 @@ window.gematikLabels = {
         Copied_Button_Label: "Custom copied button label"
     }
 };
+
+Object.defineProperty(HTMLElement.prototype, 'innerText', {
+    get() {
+        // Fallback to textContent for jsdom
+        return this.textContent;
+    },
+    set(value) {
+        this.textContent = value;
+    }
+});
