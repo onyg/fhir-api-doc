@@ -1,5 +1,6 @@
 import apiDoc from '../src/api.doc.js';
 import utils from '../src/utils.js';
+import gematikLabels from '../src/labels.js'
 
 
 jest.mock('../css/ig.apidoc.gematik.css', () => ({}));
@@ -1932,3 +1933,104 @@ describe('apiDoc.appendInfoBox', () => {
     });
 });
 
+describe('appendHeaderInfo', () => {
+    let parent;
+
+    beforeEach(() => {
+        parent = document.createElement('div');
+    });
+
+    it('should handle null headerParams', () => {
+        apiDoc.appendHeaderInfo(parent, null, ['application/json']);
+        
+        expect(parent.children.length).toBe(2);
+        
+        const table = parent.querySelector('.params-table');
+        expect(table.rows.length).toBe(2); // Header + Accept row
+        expect(table.rows[1].cells[0].textContent).toBe('Accept');
+    });
+
+    it('should handle undefined headerParams', () => {
+        apiDoc.appendHeaderInfo(parent, undefined, ['application/json']);
+        
+        expect(parent.children.length).toBe(2);
+        const table = parent.querySelector('.params-table');
+        expect(table.rows.length).toBe(2);
+    });
+
+    it('should add default Accept header with single format', () => {
+        apiDoc.appendHeaderInfo(parent, [], ['application/json']);
+        
+        const table = parent.querySelector('.params-table');
+        expect(table.rows[1].cells[0].textContent).toBe('Accept');
+        expect(table.rows[1].cells[2].textContent).toContain('Formats: */*');
+    });
+
+    it('should merge provided headerParams with default Accept header', () => {
+        const headerParams = [
+            { name: 'Authorization', type: 'string', description: 'Bearer token' }
+        ];
+        apiDoc.appendHeaderInfo(parent, headerParams, ['application/json']);
+        
+        const table = parent.querySelector('.params-table');
+        expect(table.rows.length).toBe(3); // Header + Accept + Authorization
+        expect(table.rows[1].cells[0].textContent).toBe('Accept');
+        expect(table.rows[2].cells[0].textContent).toBe('Authorization');
+    });
+
+    it('should render all header parameter fields correctly', () => {
+        const headerParams = [
+            { 
+                name: 'X-Custom-Header', 
+                type: 'string', 
+                description: 'Custom description',
+            }
+        ];
+        apiDoc.appendHeaderInfo(parent, headerParams, ['application/json']);
+
+        expect(parent.querySelector('.operation-block-section-header').textContent)
+            .toBe(gematikLabels.apiDoc.HeaderParams_Header);
+
+        const table = parent.querySelector('.params-table');
+        expect(table.rows[0].cells.length).toBe(3);
+        expect(table.rows[0].cells[0].textContent).toBe(gematikLabels.apiDoc.Parameter_Label);
+        expect(table.rows[0].cells[1].textContent).toBe(gematikLabels.apiDoc.Type_Label);
+        expect(table.rows[0].cells[2].textContent).toBe(gematikLabels.apiDoc.Description_Label);
+        expect(table.rows[1].cells[0].textContent).toBe('Accept');
+        expect(table.rows[1].cells[1].innerHTML).toBe('<code>string</code>');
+        expect(table.rows[1].cells[2].textContent).toContain('*/*');
+        const customRow = table.rows[2];
+        expect(customRow.cells[0].textContent).toBe('X-Custom-Header');
+        expect(customRow.cells[1].innerHTML).toContain('string');
+        expect(customRow.cells[2].textContent).toBe('Custom description');
+    });
+
+    it('should handle empty formats array', () => {
+        apiDoc.appendHeaderInfo(parent, [], []);
+        
+        const table = parent.querySelector('.params-table');
+        expect(table.rows[1].cells[0].textContent).toBe('Accept');
+        expect(table.rows[1].cells[1].innerHTML).toBe('<code>string</code>');
+        expect(table.rows[1].cells[2].textContent).toContain('*/*');    });
+
+    it('should handle null formats', () => {
+        apiDoc.appendHeaderInfo(parent, [], null);
+        
+        const table = parent.querySelector('.params-table');
+        expect(table.rows[1].cells[0].textContent).toBe('Accept');
+        expect(table.rows[1].cells[1].innerHTML).toBe('<code>string</code>');
+        expect(table.rows[1].cells[2].textContent).toContain('*/*');
+    });
+
+    it('should handle special characters in header names and descriptions', () => {
+        const headerParams = [
+            { name: 'X-Special-&<>', type: 'string', description: 'Special &<> chars' }
+        ];
+        apiDoc.appendHeaderInfo(parent, headerParams, ['application/json']);
+        
+        const table = parent.querySelector('.params-table');
+        const specialRow = table.rows[2];
+        expect(specialRow.cells[0].textContent).toBe('X-Special-&<>');
+        expect(specialRow.cells[2].textContent).toBe('Special &<> chars');
+    });
+});
