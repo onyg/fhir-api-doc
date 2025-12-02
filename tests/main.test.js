@@ -32,10 +32,8 @@ describe('resizeSVGs', () => {
         svgContainer.clientWidth = '200';
     
         
-        // Call the resizeSVGs function
         main.resizeSVGs();
         
-        // Check that the SVG has been resized correctly
         expect(svg.style.width).toBe('200px');
         expect(svg.style.height).toBe('100px'); // 200 / (100/50) 
     });
@@ -76,7 +74,6 @@ describe('resizeSVGs', () => {
     });
 
     it('should handle SVGs with extreme aspect ratios', () => {
-        // Very wide SVG
         svg.setAttribute('viewBox', '0 0 1000 10');
         svgContainer.clientWidth = '200';
         
@@ -115,7 +112,6 @@ describe('downloadSVG', () => {
     });
 
     afterEach(() => {
-        // Clean up the container
         document.body.removeChild(container);
 
         delete global.URL;
@@ -131,7 +127,6 @@ describe('downloadSVG', () => {
         svgContainer.appendChild(svg);
         container.appendChild(svgContainer);
 
-        // Call the downloadSVG function
         main.downloadSVG();
 
         // Check that a download link was created
@@ -151,7 +146,6 @@ describe('downloadSVG', () => {
         imgContainer.appendChild(img);
         container.appendChild(imgContainer);
 
-        // Mock fetch to return SVG content
         window.fetch = jest.fn().mockImplementation(() => 
             Promise.resolve({
                 ok: true,

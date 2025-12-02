@@ -1168,40 +1168,40 @@ describe('toJson', () => {
 });
 
 describe('utils.removeLeadingSlash', () => {
-  test('should remove leading slash from string', () => {
-    expect(utils.removeLeadingSlash('/path/to/file')).toBe('path/to/file');
-  });
+    test('should remove leading slash from string', () => {
+        expect(utils.removeLeadingSlash('/path/to/file')).toBe('path/to/file');
+    });
 
-  test('should return string unchanged if no leading slash', () => {
-    expect(utils.removeLeadingSlash('path/to/file')).toBe('path/to/file');
-  });
+    test('should return string unchanged if no leading slash', () => {
+        expect(utils.removeLeadingSlash('path/to/file')).toBe('path/to/file');
+    });
 
-  test('should handle string with only a slash', () => {
-    expect(utils.removeLeadingSlash('/')).toBe('');
-  });
+    test('should handle string with only a slash', () => {
+        expect(utils.removeLeadingSlash('/')).toBe('');
+    });
 
-  test('should handle empty string', () => {
-    expect(utils.removeLeadingSlash('')).toBe('');
-  });
+    test('should handle empty string', () => {
+        expect(utils.removeLeadingSlash('')).toBe('');
+    });
 
-  test('should only remove first slash, not multiple leading slashes', () => {
-    expect(utils.removeLeadingSlash('//path/to/file')).toBe('/path/to/file');
-  });
+    test('should only remove first slash, not multiple leading slashes', () => {
+        expect(utils.removeLeadingSlash('//path/to/file')).toBe('/path/to/file');
+    });
 
-  test('should not remove middle and trailing slash', () => {
-    expect(utils.removeLeadingSlash('/path/to/file/')).toBe('path/to/file/');
-  });
+    test('should not remove middle and trailing slash', () => {
+        expect(utils.removeLeadingSlash('/path/to/file/')).toBe('path/to/file/');
+    });
 
-  test('should handle string starting with special characters other than slash', () => {
-    expect(utils.removeLeadingSlash('#path')).toBe('#path');
-    expect(utils.removeLeadingSlash('?query')).toBe('?query');
-  });
+    test('should handle string starting with special characters other than slash', () => {
+        expect(utils.removeLeadingSlash('#path')).toBe('#path');
+        expect(utils.removeLeadingSlash('?query')).toBe('?query');
+    });
 
-  test('should handle string with only non-slash characters', () => {
-    expect(utils.removeLeadingSlash('abc123')).toBe('abc123');
-  });
+    test('should handle string with only non-slash characters', () => {
+        expect(utils.removeLeadingSlash('abc123')).toBe('abc123');
+    });
 
-  test('should handle whitespace before slash', () => {
-    expect(utils.removeLeadingSlash(' /path')).toBe(' /path');
-  });
+    test('should handle whitespace before slash', () => {
+        expect(utils.removeLeadingSlash(' /path')).toBe(' /path');
+    });
 });
