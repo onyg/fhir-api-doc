@@ -2318,3 +2318,137 @@ describe('appendResponseInfo', () => {
     });
 });
 
+describe('appendSearchParameters', () => {
+    let parent;
+
+    beforeEach(() => {
+        parent = document.createElement('div');
+    });
+
+    it('should do nothing when params is null', () => {
+        apiDoc.appendSearchParameters(parent, null, 'GET');
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should do nothing when params is an empty array', () => {
+        apiDoc.appendSearchParameters(parent, [], 'GET');
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should filter out parameters named "resource"', () => {
+        const params = [
+            { name: 'resource', type: 'Resource', documentation: 'Resource parameter' },
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET');
+
+        const table = parent.querySelector('.params-table');
+        expect(table.rows.length).toBe(2); // Header + status row
+        expect(table.rows[1].cells[0].textContent).toBe('status');
+    });
+
+    it('should add _format parameter when multiple formats exist', () => {
+        const params = [
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+        const formats = ['application/json', 'application/xml'];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET', formats);
+
+        const table = parent.querySelector('.params-table');
+        const formatRow = table.rows[1];
+        expect(formatRow.cells[0].textContent).toBe('_format');
+        expect(formatRow.cells[1].innerHTML).toBe('<code>string</code>');
+        expect(formatRow.cells[2].textContent).toContain('application/json, application/xml');
+    });
+
+    it('should not add _format parameter when only one format exists', () => {
+        const params = [
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+        const formats = ['application/json'];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET', formats);
+
+        const table = parent.querySelector('.params-table');
+        expect(table.rows.length).toBe(2); // Header + status row
+        expect(table.rows[1].cells[0].textContent).toBe('status');
+    });
+
+    it('should not add _format parameter when _format already exists', () => {
+        const params = [
+            { name: '_format', type: 'string', documentation: 'Existing format parameter' },
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+        const formats = ['application/json', 'application/xml'];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET', formats);
+
+        const table = parent.querySelector('.params-table');
+        const formatRow = table.rows[1];
+        expect(formatRow.cells[0].textContent).toBe('_format');
+        expect(formatRow.cells[2].textContent).toBe('Existing format parameter');
+    });
+
+    it('should create table with correct headers', () => {
+        const params = [
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET');
+
+        const table = parent.querySelector('.params-table');
+        const headers = table.querySelectorAll('thead th');
+        expect(headers[0].textContent).toBe(gematikLabels.apiDoc.Parameter_Label);
+        expect(headers[1].textContent).toBe(gematikLabels.apiDoc.Type_Label);
+        expect(headers[2].textContent).toBe(gematikLabels.apiDoc.Documentation_Label);
+    });
+
+    it('should handle parameters with empty documentation', () => {
+        const params = [
+            { name: 'status', type: 'token', documentation: '' }
+        ];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET');
+
+        const table = parent.querySelector('.params-table');
+        const paramRow = table.rows[1];
+        expect(paramRow.cells[2].textContent).toBe('');
+    });
+
+    it('should handle null formats', () => {
+        const params = [
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET', null);
+
+        const table = parent.querySelector('.params-table');
+        expect(table.rows.length).toBe(2); // Header + status row
+    });
+
+    it('should handle empty formats array', () => {
+        const params = [
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET', []);
+
+        const table = parent.querySelector('.params-table');
+        expect(table.rows.length).toBe(2); // Header + status row
+    });
+
+    it('should add section header for search parameters', () => {
+        const params = [
+            { name: 'status', type: 'token', documentation: 'Status parameter' }
+        ];
+
+        apiDoc.appendSearchParameters(parent, params, 'GET');
+
+        const sectionHeader = parent.querySelector('.operation-block-section-header');
+        expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.SearchParams_Header);
+    });
+});
+
+

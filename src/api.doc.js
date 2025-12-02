@@ -567,7 +567,7 @@ function appendResponseInfo(parent, responseInfos) {
 }
 
 function appendSearchParameters(parent, params, httpMethod, formats=null) {
-    if(!params | params.length == 0) {
+    if(!Array.isArray(params) || params.length == 0) {
         params = [];
     }
     // In OperationDefinition resources, parameters named "resource" are typically used to describe the request body structure.
@@ -594,7 +594,7 @@ function appendSearchParameters(parent, params, httpMethod, formats=null) {
             searchParametersRows.unshift(element);
         }
     }
-    if(!searchParametersRows | searchParametersRows.length == 0) {
+    if(searchParametersRows.length == 0) {
         return;
     }
     parent.appendChild(utils.createElement('div', { classes: ['operation-block-section-header'], innerHTML: gematikLabels.apiDoc.SearchParams_Header }));
