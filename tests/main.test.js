@@ -1,4 +1,5 @@
 import main from '../src/main.js';
+import gematikLabels from '../src/labels.js';
 
 describe('resizeSVGs', () => {
     let container;
@@ -93,3 +94,151 @@ describe('resizeSVGs', () => {
         expect(svg.style.height).toBe('10000px'); // 100 / (10/1000)
     });
 });
+
+describe('downloadSVG', () => {
+    let container;
+    let originalFetch = window.fetch;
+    let mockURL;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        mockURL = {
+            createObjectURL: jest.fn().mockReturnValue('blob:mockurl')
+        };
+        global.URL = mockURL;
+
+        global.XMLSerializer = jest.fn(() => ({
+            serializeToString: jest.fn().mockReturnValue('<svg></svg>')
+        }));
+    });
+
+    afterEach(() => {
+        // Clean up the container
+        document.body.removeChild(container);
+
+        delete global.URL;
+        delete global.XMLSerializer;
+    });
+
+    it('should create download buttons for embedded SVGs', () => {
+        // Create an SVG container with an embedded SVG
+        const svgContainer = document.createElement('div');
+        svgContainer.classList.add('gem-ig-svg-container');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svgContainer.appendChild(svg);
+        container.appendChild(svgContainer);
+
+        // Call the downloadSVG function
+        main.downloadSVG();
+
+        // Check that a download link was created
+        const downloadLink = svgContainer.querySelector('.gem-ig-download-btn');
+        expect(downloadLink).toBeTruthy();
+        expect(downloadLink.innerText).toBe(gematikLabels.ig.Download_Button_SVG);
+        expect(downloadLink.download).toBe('downloaded.svg');
+        expect(downloadLink.href).toBe('blob:mockurl');
+    });
+
+    it('should create download buttons for SVG images', async () => {
+        // Create an SVG image
+        const imgContainer = document.createElement('div');
+        imgContainer.classList.add('gem-ig-svg-container');
+        const img = document.createElement('img');
+        img.src = 'test.svg';
+        imgContainer.appendChild(img);
+        container.appendChild(imgContainer);
+
+        // Mock fetch to return SVG content
+        window.fetch = jest.fn().mockImplementation(() => 
+            Promise.resolve({
+                ok: true,
+                text: () => Promise.resolve('<svg></svg>')
+            })
+        );
+
+        main.downloadSVG();
+
+        await new Promise(resolve => {
+            setTimeout(() => {
+                const downloadLink = imgContainer.querySelector('.gem-ig-download-btn');
+                expect(downloadLink).toBeTruthy();
+                expect(downloadLink.innerText).toBe(gematikLabels.ig.Download_Button_SVG);
+                expect(downloadLink.download).toBe('downloaded.svg');
+                expect(downloadLink.href).toBe('blob:mockurl');
+                resolve();
+            }, 10);
+        });
+
+        window.fetch = originalFetch;
+    });
+
+    it('should handle fetch errors for SVG images gracefully', async () => {
+        const imgContainer = document.createElement('div');
+        imgContainer.classList.add('gem-ig-svg-container');
+        const img = document.createElement('img');
+        img.src = 'test.svg';
+        imgContainer.appendChild(img);
+        container.appendChild(imgContainer);
+
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Mock fetch to return an error
+        window.fetch = jest.fn().mockImplementation(() => 
+            Promise.resolve({
+                ok: false,
+                statusText: 'Not Found'
+            })
+        );
+
+        main.downloadSVG();
+
+        await new Promise(resolve => {
+            setTimeout(() => {
+                expect(consoleErrorSpy).toHaveBeenCalledWith(
+                    'Error fetching SVG from <img>:', 
+                    expect.any(Error)
+                );
+                
+                const downloadLink = imgContainer.querySelector('.gem-ig-download-btn');
+                expect(downloadLink).toBeFalsy();
+
+                consoleErrorSpy.mockRestore();
+                resolve();
+            }, 10);
+        });
+
+        window.fetch = originalFetch;
+    });
+
+    it('should handle serialization errors for embedded SVGs', () => {
+        const svgContainer = document.createElement('div');
+        svgContainer.classList.add('gem-ig-svg-container');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svgContainer.appendChild(svg);
+        container.appendChild(svgContainer);
+
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Mock XMLSerializer to throw an error
+        global.XMLSerializer = jest.fn(() => ({
+            serializeToString: () => { throw new Error('Serialization failed'); }
+        }));
+
+        main.downloadSVG();
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'Error processing embedded SVG:', 
+            expect.any(Error)
+        );
+
+        const downloadLink = svgContainer.querySelector('.gem-ig-download-btn');
+        expect(downloadLink).toBeFalsy();
+
+        consoleErrorSpy.mockRestore();
+    });
+});
+
