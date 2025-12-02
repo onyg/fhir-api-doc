@@ -2167,3 +2167,154 @@ describe('appendExamples', () => {
     });
 });
 
+describe('appendResponseInfo', () => {
+    let parent;
+
+    beforeEach(() => {
+        parent = document.createElement('div');
+    });
+
+    it('should append nothing when responseInfos is null', () => {
+        apiDoc.appendResponseInfo(parent, null);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should append nothing when responseInfos is undefined', () => {
+        apiDoc.appendResponseInfo(parent, undefined);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should append nothing when responseInfos is empty array', () => {
+        apiDoc.appendResponseInfo(parent, []);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should append header and table for single response info', () => {
+        const responseInfos = [{
+            statusCode: '200',
+            description: 'Success',
+            errorCode: 'N/A',
+            responseType: 'application/json'
+        }];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        expect(parent.children.length).toBe(2);
+        expect(parent.children[0].classList.contains('operation-block-section-header')).toBe(true);
+        expect(parent.children[0].innerHTML).toBe(gematikLabels.apiDoc.Response_Header);
+        expect(parent.children[1].classList.contains('operation-block-description')).toBe(true);
+        expect(parent.children[1].classList.contains('with-table')).toBe(true);
+    });
+
+    it('should sort response infos by status code numerically', () => {
+        const responseInfos = [
+            { statusCode: '500', description: 'Server Error', errorCode: 'ERR500', responseType: 'text/plain' },
+            { statusCode: '200', description: 'Success', errorCode: 'N/A', responseType: 'application/json' },
+            { statusCode: '404', description: 'Not Found', errorCode: 'ERR404', responseType: 'text/html' }
+        ];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        const tbody = parent.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        expect(rows.length).toBe(3);
+        expect(rows[0].querySelector('td').innerHTML).toBe('<code>200</code>');
+        expect(rows[1].querySelector('td').innerHTML).toBe('<code>404</code>');
+        expect(rows[2].querySelector('td').innerHTML).toBe('<code>500</code>');
+    });
+
+    it('should use empty string for missing description', () => {
+        const responseInfos = [{
+            statusCode: '200',
+            errorCode: 'N/A',
+            responseType: 'application/json'
+        }];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        const tbody = parent.querySelector('tbody');
+        const cells = tbody.querySelector('tr').querySelectorAll('td');
+        
+        expect(cells[1].innerHTML).toBe('');
+    });
+
+    it('should create table with correct headers', () => {
+        const responseInfos = [{
+            statusCode: '200',
+            description: 'Success',
+            errorCode: 'N/A',
+            responseType: 'application/json'
+        }];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        const thead = parent.querySelector('thead');
+        const headers = thead.querySelectorAll('th');
+        
+        expect(headers.length).toBe(4);
+        expect(headers[0].innerHTML).toBe(gematikLabels.apiDoc.StatusCode_Label);
+        expect(headers[1].innerHTML).toBe(gematikLabels.apiDoc.Description_Label);
+        expect(headers[2].innerHTML).toBe(gematikLabels.apiDoc.ErrorCode_Label);
+        expect(headers[3].innerHTML).toBe(gematikLabels.apiDoc.Response_Type);
+    });
+
+    it('should wrap status code in code tags', () => {
+        const responseInfos = [{
+            statusCode: '201',
+            description: 'Created',
+            errorCode: 'N/A',
+            responseType: 'application/json'
+        }];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        const tbody = parent.querySelector('tbody');
+        const firstCell = tbody.querySelector('td');
+        
+        expect(firstCell.innerHTML).toBe('<code>201</code>');
+    });
+
+    it('should not mutate original responseInfos array', () => {
+        const responseInfos = [
+            { statusCode: '500', description: 'Server Error', errorCode: 'ERR500', responseType: 'text/plain' },
+            { statusCode: '200', description: 'Success', errorCode: 'N/A', responseType: 'application/json' }
+        ];
+        const originalOrder = [...responseInfos];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        expect(responseInfos).toEqual(originalOrder);
+    });
+
+    it('should not escape HTML special characters in description', () => {
+        const responseInfos = [{
+            statusCode: '400',
+            description: '<div>Some nested text</div>',
+            errorCode: 'ERR400',
+            responseType: 'text/html'
+        }];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        const tbody = parent.querySelector('tbody');
+        const cells = tbody.querySelector('tr').querySelectorAll('td');
+        
+        expect(cells[1].innerHTML).toBe('<div>Some nested text</div>');
+    });
+
+    it('should handle multiple responses with same status code', () => {
+        const responseInfos = [
+            { statusCode: '200', description: 'Success 1', errorCode: 'N/A', responseType: 'application/json' },
+            { statusCode: '200', description: 'Success 2', errorCode: 'N/A', responseType: 'application/xml' }
+        ];
+
+        apiDoc.appendResponseInfo(parent, responseInfos);
+
+        const tbody = parent.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        expect(rows.length).toBe(2);
+    });
+});
+

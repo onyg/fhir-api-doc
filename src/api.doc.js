@@ -547,11 +547,11 @@ function appendExamples(parent, forRequest, forResponse) {
 
 
 function appendResponseInfo(parent, responseInfos) {
-    if (responseInfos) {
+    if (Array.isArray(responseInfos) && responseInfos.length > 0) {
         parent.appendChild(utils.createElement('div', { classes: ['operation-block-section-header'], innerHTML: gematikLabels.apiDoc.Response_Header }));
         const responseRows = responseInfos.slice()
             .sort((a, b) => Number(a.statusCode) - Number(b.statusCode))
-            .map(({ statusCode, description, errorCode, responseType }) => [
+            .map(({ statusCode, description = '', errorCode, responseType }) => [
                 `<code>${statusCode}</code>`, 
                 description, 
                 errorCode, 
