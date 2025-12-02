@@ -1180,8 +1180,11 @@ describe('parseBaseUrl', () => {
     });
 
     test('should handle empty string', () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
         const result = apiDoc.parseBaseUrl('');
         expect(result).toEqual([null, '']);
+        expect(warnSpy).toHaveBeenCalledWith('Wrong URL:', '');
+        warnSpy.mockRestore();
     });
 
     test('should handle URL with special characters in path', () => {
