@@ -351,13 +351,18 @@ function parseBaseUrl(fullUrl) {
     try {
         const parsed = new URL(fullUrl);
         const host = `${parsed.protocol}//${parsed.host}`;
-        let path = parsed.pathname.replace(/\/$/, "");
-        if (!path.endsWith("/")) {
-            path += "/";
-        }
+        
+        let path = parsed.pathname;
+        
         if (path.startsWith("/")) {
             path = path.slice(1);
         }
+        
+        if (path.endsWith("/")) {
+            path = path.slice(0, -1);
+        }
+        
+        path = path + "/";
 
         return [host, path];
     } catch {

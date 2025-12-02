@@ -1112,3 +1112,95 @@ describe('extractApiContent', () => {
         });
     });
 });
+
+describe('parseBaseUrl', () => {
+    test('should parse a valid HTTPS URL with path', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/fhir/r4');
+        expect(result).toEqual(['https://example.com', 'fhir/r4/']);
+    });
+
+    test('should parse a valid HTTP URL with path', () => {
+        const result = apiDoc.parseBaseUrl('http://example.com/api');
+        expect(result).toEqual(['http://example.com', 'api/']);
+    });
+
+    test('should parse URL with trailing slash', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/fhir/');
+        expect(result).toEqual(['https://example.com', 'fhir/']);
+    });
+
+    test('should parse URL without path', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com');
+        expect(result).toEqual(['https://example.com', '/']);
+    });
+
+    test('should parse URL with only root path', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/');
+        expect(result).toEqual(['https://example.com', '/']);
+    });
+
+    test('should parse URL with port number', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com:8080/fhir');
+        expect(result).toEqual(['https://example.com:8080', 'fhir/']);
+    });
+
+    test('should parse URL with deep path', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/api/v1/fhir/r4');
+        expect(result).toEqual(['https://example.com', 'api/v1/fhir/r4/']);
+    });
+
+    test('should parse URL with query parameters', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/fhir?version=r4');
+        expect(result).toEqual(['https://example.com', 'fhir/']);
+    });
+
+    test('should parse URL with hash fragment', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/fhir#section');
+        expect(result).toEqual(['https://example.com', 'fhir/']);
+    });
+
+    test('should handle localhost', () => {
+        const result = apiDoc.parseBaseUrl('http://localhost:3000/api');
+        expect(result).toEqual(['http://localhost:3000', 'api/']);
+    });
+
+    test('should handle IP address', () => {
+        const result = apiDoc.parseBaseUrl('http://192.168.1.1:8080/fhir');
+        expect(result).toEqual(['http://192.168.1.1:8080', 'fhir/']);
+    });
+
+    test('should handle null input', () => {
+        const result = apiDoc.parseBaseUrl(null);
+        expect(result).toEqual([null, '']);
+    });
+
+    test('should handle undefined input', () => {
+        const result = apiDoc.parseBaseUrl(undefined);
+        expect(result).toEqual([null, '']);
+    });
+
+    test('should handle empty string', () => {
+        const result = apiDoc.parseBaseUrl('');
+        expect(result).toEqual([null, '']);
+    });
+
+    test('should handle URL with special characters in path', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/fhir/r4%20test');
+        expect(result).toEqual(['https://example.com', 'fhir/r4%20test/']);
+    });
+
+    test('should handle URL with subdomain', () => {
+        const result = apiDoc.parseBaseUrl('https://api.sub.example.com/fhir');
+        expect(result).toEqual(['https://api.sub.example.com', 'fhir/']);
+    });
+
+    test('should parse URL with multiple consecutive slashes in path', () => {
+        const result = apiDoc.parseBaseUrl('https://example.com/fhir//r4');
+        expect(result).toEqual(['https://example.com', 'fhir//r4/']);
+    });
+
+    test('should handle file protocol', () => {
+        const result = apiDoc.parseBaseUrl('file:///path/to/file');
+        expect(result).toEqual(['file://', 'path/to/file/']);
+    });
+});
