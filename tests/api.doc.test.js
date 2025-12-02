@@ -1204,3 +1204,62 @@ describe('parseBaseUrl', () => {
         expect(result).toEqual(['file://', 'path/to/file/']);
     });
 });
+
+describe('removeLeadingTabs', () => {
+    test('removes leading tabs from single line', () => {
+        expect(apiDoc.removeLeadingTabs('\t\tHello')).toBe('Hello');
+    });
+
+    test('removes leading spaces from single line', () => {
+        expect(apiDoc.removeLeadingTabs('    Hello')).toBe('Hello');
+    });
+
+    test('removes leading tabs and spaces from single line', () => {
+        expect(apiDoc.removeLeadingTabs('\t  Hello')).toBe('Hello');
+    });
+
+    test('removes leading whitespace from multiple lines', () => {
+        const input = '\t\tLine 1\n    Line 2\n\t Line 3';
+        const expected = 'Line 1\nLine 2\nLine 3';
+        expect(apiDoc.removeLeadingTabs(input)).toBe(expected);
+    });
+
+    test('preserves text without leading whitespace', () => {
+        expect(apiDoc.removeLeadingTabs('Hello')).toBe('Hello');
+    });
+
+    test('preserves trailing whitespace', () => {
+        expect(apiDoc.removeLeadingTabs('Hello\t\t')).toBe('Hello\t\t');
+    });
+
+    test('preserves mid-line whitespace', () => {
+        expect(apiDoc.removeLeadingTabs('Hello\t\tWorld')).toBe('Hello\t\tWorld');
+    });
+
+    test('handles empty string', () => {
+        expect(apiDoc.removeLeadingTabs('')).toBe('');
+    });
+
+    test('handles string with only whitespace', () => {
+        expect(apiDoc.removeLeadingTabs('\t\t  ')).toBe('');
+    });
+
+    test('handles lines with varying indentation', () => {
+        const input = '\tLine 1\n\t\t\tLine 2\n  Line 3';
+        const expected = 'Line 1\nLine 2\nLine 3';
+        expect(apiDoc.removeLeadingTabs(input)).toBe(expected);
+    });
+
+    test('preserves empty lines', () => {
+        const input = '\tLine 1\n\n\tLine 2';
+        const expected = 'Line 1\n\nLine 2';
+        expect(apiDoc.removeLeadingTabs(input)).toBe(expected);
+    });
+
+    test('handles lines with only indentation', () => {
+        const input = '\tLine 1\n\t\t\n\tLine 2';
+        const expected = 'Line 1\n\nLine 2';
+        expect(apiDoc.removeLeadingTabs(input)).toBe(expected);
+    });
+});
+
