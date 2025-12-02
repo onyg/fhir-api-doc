@@ -1771,3 +1771,164 @@ describe('renderApiExample', () => {
         expect(buttonParent.children).toHaveLength(3);
     });
 });
+
+describe('apiDoc.appendInfoBox', () => {
+    let parent;
+
+    beforeEach(() => {
+        parent = document.createElement('div');
+    });
+
+    it('should append nothing when all parameters are null or empty', () => {
+        apiDoc.appendInfoBox(parent, null, [], null);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should append operationId when provided', () => {
+        apiDoc.appendInfoBox(parent, 'test-operation-id', [], null);
+    
+        expect(parent.children.length).toBe(1);
+        const operationDiv = parent.children[0];
+        expect(operationDiv.classList.contains('operation-block-description')).toBe(true);
+        expect(operationDiv.innerHTML).toContain('<b>test-operation-id</b>');
+    });
+
+    it('should append formats when provided as array', () => {
+        apiDoc.appendInfoBox(parent, null, ['application/json', 'application/xml'], null);
+    
+        expect(parent.children.length).toBe(1);
+        const formatsDiv = parent.children[0];
+        expect(formatsDiv.classList.contains('operation-block-description')).toBe(true);
+        expect(formatsDiv.innerHTML).toContain('<b>application/json</b>');
+        expect(formatsDiv.innerHTML).toContain('<b>application/xml</b>');
+    });
+
+    it('should append description when provided', () => {
+        const description = 'This is a test description';
+        apiDoc.appendInfoBox(parent, null, [], description);
+    
+        expect(parent.children.length).toBe(1);
+        const descDiv = parent.children[0];
+        expect(descDiv.classList.contains('operation-block-description')).toBe(true);
+        expect(descDiv.innerHTML).toBe(description);
+    });
+
+    it('should add low-padding class to formats when operationId is also present', () => {
+        apiDoc.appendInfoBox(parent, 'test-op', ['application/json'], null);
+    
+        expect(parent.children.length).toBe(2);
+        const formatsDiv = parent.children[1];
+        expect(formatsDiv.classList.contains('low-padding')).toBe(true);
+    });
+
+    it('should not add low-padding class to formats when operationId is not present', () => {
+        apiDoc.appendInfoBox(parent, null, ['application/json'], null);
+    
+        expect(parent.children.length).toBe(1);
+        const formatsDiv = parent.children[0];
+        expect(formatsDiv.classList.contains('low-padding')).toBe(false);
+    });
+
+    it('should append all three elements when all parameters are provided', () => {
+        apiDoc.appendInfoBox(parent, 'my-operation', ['application/fhir+json'], 'Description text');
+    
+        expect(parent.children.length).toBe(3);
+    
+        const opDiv = parent.children[0];
+        expect(opDiv.innerHTML).toContain('my-operation');
+    
+        const formatsDiv = parent.children[1];
+        expect(formatsDiv.innerHTML).toContain('application/fhir+json');
+        expect(formatsDiv.classList.contains('low-padding')).toBe(true);
+    
+        const descDiv = parent.children[2];
+        expect(descDiv.innerHTML).toContain('Description text');
+    });
+
+    it('should handle empty string operationId', () => {
+        apiDoc.appendInfoBox(parent, '', [], null);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should handle empty array for formats', () => {
+        apiDoc.appendInfoBox(parent, null, [], null);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should handle undefined formats', () => {
+        apiDoc.appendInfoBox(parent, null, undefined, null);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should handle null formats', () => {
+        apiDoc.appendInfoBox(parent, null, null, null);
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should handle empty string description', () => {
+        apiDoc.appendInfoBox(parent, null, [], '');
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should remove leading tabs from description', () => {
+        const description = '\t\tIndented text\n\t\tMore indented';
+        apiDoc.appendInfoBox(parent, null, [], description);
+    
+        expect(parent.children.length).toBe(1);
+        const descDiv = parent.children[0];
+        expect(descDiv.innerHTML).toBe('Indented text\nMore indented');
+    });
+
+    it('should handle description with HTML markup', () => {
+        const description = '<strong>Bold text</strong> and <em>italic</em>';
+        apiDoc.appendInfoBox(parent, null, [], description);
+    
+        expect(parent.children.length).toBe(1);
+        const descDiv = parent.children[0];
+        expect(descDiv.innerHTML).toContain('<strong>Bold text</strong>');
+        expect(descDiv.innerHTML).toContain('<em>italic</em>');
+    });
+
+    it('should handle single format in array', () => {
+        apiDoc.appendInfoBox(parent, null, ['text/plain'], null);
+    
+        expect(parent.children.length).toBe(1);
+        const formatsDiv = parent.children[0];
+        expect(formatsDiv.innerHTML).toContain('<b>text/plain</b>');
+    });
+
+    it('should join multiple formats with comma and space', () => {
+        apiDoc.appendInfoBox(parent, null, ['application/json', 'application/xml', 'text/html'], null);
+    
+        expect(parent.children.length).toBe(1);
+        const formatsDiv = parent.children[0];
+        expect(formatsDiv.innerHTML).toContain('<b>application/json</b>, <b>application/xml</b>, <b>text/html</b>');
+    });
+
+    it('should handle special characters in operationId', () => {
+        apiDoc.appendInfoBox(parent, 'operation-with-special_chars$123', [], null);
+    
+        expect(parent.children.length).toBe(1);
+        const opDiv = parent.children[0];
+        expect(opDiv.innerHTML).toContain('operation-with-special_chars$123');
+    });
+
+    it('should preserve order: operationId, formats, description', () => {
+        apiDoc.appendInfoBox(parent, 'op1', ['fmt1'], 'desc1');
+    
+        expect(parent.children[0].innerHTML).toContain('op1');
+        expect(parent.children[1].innerHTML).toContain('fmt1');
+        expect(parent.children[2].innerHTML).toContain('desc1');
+    });
+
+    it('should handle formats array with empty strings', () => {
+        apiDoc.appendInfoBox(parent, null, ['', 'application/json', ''], null);
+    
+        expect(parent.children.length).toBe(1);
+        const formatsDiv = parent.children[0];
+        // Empty strings will create empty <b></b> tags
+        expect(formatsDiv.innerHTML).not.toContain('<b></b>');
+        expect(formatsDiv.innerHTML).toContain('<b>application/json</b>');
+    });
+});
+

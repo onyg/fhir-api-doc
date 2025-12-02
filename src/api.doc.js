@@ -482,7 +482,10 @@ function appendInfoBox(parent, operationId=null, formats=[], description=null) {
         withLowPadding = true;
     }
     if (formats?.length) {
-        const contentTypeHtml= formats.map(value => `<b>${value}</b>`);
+        const contentTypeHtml= formats
+            .filter(value => value?.trim())
+            .map(value => `<b>${value}</b>`);
+
         let classesContentType = ['operation-block-description'];
         if (withLowPadding) {
             classesContentType.push('low-padding');
