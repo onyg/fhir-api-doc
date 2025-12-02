@@ -2034,3 +2034,136 @@ describe('appendHeaderInfo', () => {
         expect(specialRow.cells[2].textContent).toBe('Special &<> chars');
     });
 });
+
+describe('appendExamples', () => {
+    let parent;
+
+    beforeEach(() => {
+        parent = document.createElement('div');
+    });
+
+    it('should do nothing when both request and response examples are empty', () => {
+        apiDoc.appendExamples(parent, [], []);
+        
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should add request examples section header when request examples exist', () => {
+        const requestExamples = [
+            { name: 'Request1', type: 'json', data: '{"key": "value"}' }
+        ];
+
+        apiDoc.appendExamples(parent, requestExamples, []);
+        
+        const sectionHeader = parent.querySelector('.operation-block-section-header');
+        expect(sectionHeader).toBeTruthy();
+        expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.RequestExample_Header);
+    });
+
+    it('should add response examples section header when response examples exist', () => {
+        const responseExamples = [
+            { name: 'Response1', type: 'json', data: '{"status": "ok"}' }
+        ];
+
+        apiDoc.appendExamples(parent, [], responseExamples);
+        
+        const sectionHeader = parent.querySelector('.operation-block-section-header');
+        expect(sectionHeader).toBeTruthy();
+        expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.ResponseExample_Header);
+    });
+
+    it('should add both request and response example section headers when both exist', () => {
+        const requestExamples = [
+            { name: 'Request1', type: 'json', data: '{"key": "value"}' }
+        ];
+        const responseExamples = [
+            { name: 'Response1', type: 'json', data: '{"status": "ok"}' }
+        ];
+
+        apiDoc.appendExamples(parent, requestExamples, responseExamples);
+        
+        const sectionHeaders = parent.querySelectorAll('.operation-block-section-header');
+        expect(sectionHeaders.length).toBe(2);
+        expect(sectionHeaders[0].textContent).toBe(gematikLabels.apiDoc.RequestExample_Header);
+        expect(sectionHeaders[1].textContent).toBe(gematikLabels.apiDoc.ResponseExample_Header);
+    });
+
+    it('should handle multiple request examples', () => {
+        const requestExamples = [
+            { name: 'Request1', type: 'json', data: '{"key1": "value1"}' },
+            { name: 'Request2', type: 'xml', data: '<request>data</request>' }
+        ];
+
+        apiDoc.appendExamples(parent, requestExamples, []);
+        
+        const sectionHeader = parent.querySelector('.operation-block-section-header');
+        expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.RequestExample_Header);
+        
+        const exampleButtonContainer = parent.querySelector('.operation-block-description');
+        expect(exampleButtonContainer.children.length).toBe(requestExamples.length);
+    });
+
+    it('should handle multiple response examples', () => {
+        const responseExamples = [
+            { name: 'Response1', type: 'json', data: '{"status1": "ok"}' },
+            { name: 'Response2', type: 'xml', data: '<response>data</response>' }
+        ];
+
+        apiDoc.appendExamples(parent, [], responseExamples);
+        
+        const sectionHeader = parent.querySelector('.operation-block-section-header');
+        expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.ResponseExample_Header);
+        
+        const exampleButtonContainer = parent.querySelector('.operation-block-description');
+        expect(exampleButtonContainer.children.length).toBe(responseExamples.length);
+    });
+
+    it('should handle empty data in examples', () => {
+        const requestExamples = [
+            { name: 'Request1', type: 'json', data: '' }
+        ];
+
+        apiDoc.appendExamples(parent, requestExamples, []);
+        
+        const sectionHeader = parent.querySelector('.operation-block-section-header');
+        expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.RequestExample_Header);
+    });
+
+    it('should handle null or undefined examples', () => {
+        apiDoc.appendExamples(parent, null, undefined);
+        
+        expect(parent.children.length).toBe(0);
+    });
+
+    it('should handle special characters in example names', () => {
+        const requestExamples = [
+            { name: 'Request-with_special&chars', type: 'json', data: '{"key": "value"}' }
+        ];
+
+        apiDoc.appendExamples(parent, requestExamples, []);
+        
+        const buttons = parent.querySelectorAll('button.example');
+        expect(buttons[0].textContent).toContain('Request-with_special&chars');
+    });
+
+    it('should preserve order of examples', () => {
+        const requestExamples = [
+            { name: 'First', type: 'json', data: '{"first": true}' },
+            { name: 'Second', type: 'xml', data: '<second>data</second>' }
+        ];
+
+        const responseExamples = [
+            { name: 'Response1', type: 'json', data: '{"status1": "ok"}' },
+            { name: 'Response2', type: 'xml', data: '<response>data</response>' }
+        ];
+
+        apiDoc.appendExamples(parent, requestExamples, responseExamples);
+        
+        const buttons = parent.querySelectorAll('button.example .label');
+        expect(buttons[0].textContent).toBe('JSON');
+        expect(buttons[1].textContent).toBe('XML');
+        expect(buttons[2].textContent).toBe('JSON');
+        expect(buttons[3].textContent).toBe('XML');
+    });
+});
+
