@@ -2450,5 +2450,3 @@ describe('appendSearchParameters', () => {
         expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.SearchParams_Header);
     });
 });
-
-

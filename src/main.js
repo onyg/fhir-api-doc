@@ -253,7 +253,7 @@ function convertBibliographyToLink(literatureData) {
 }
 
 // Make public
-igtools.convertBibliographyToLink = convertBibliographyToLink;
+window.igtools.convertBibliographyToLink = convertBibliographyToLink;
 
 export default {
     resizeSVGs,

@@ -847,10 +847,9 @@ describe('createCopyButton', () => {
 
     test('should maintain separate click handlers for multiple instances', async () => {
         const button1 = utils.createCopyButton('data1');
-        const button2 = utils.createCopyButton('data2');
+        utils.createCopyButton('data2');
         
         const copyButton1 = button1.querySelector('button');
-        const copyButton2 = button2.querySelector('button');
         
         copyButton1.click();
         

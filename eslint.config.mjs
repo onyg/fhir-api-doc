@@ -4,6 +4,9 @@ import globals from 'globals';
 export default [
     js.configs.recommended,
     {
+        ignores: ['dist/**']
+    },
+    {
         files: ['**/*.{js,mjs,cjs}'],
         languageOptions: {
             globals: {
@@ -13,7 +16,8 @@ export default [
             }
         },
         rules: {
-            indent: ['error', 4]
+            indent: ['error', 4],
+            "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
         }
     }
 ];
