@@ -253,7 +253,8 @@ igtools.convertBibliographyToLink = convertBibliographyToLink;
 
 export default {
     resizeSVGs,
-    downloadSVG
+    downloadSVG,
+    downloadImages
 }
 // Set up event listeners to initialize functions when the page has fully loaded
 document.addEventListener('DOMContentLoaded', () => {

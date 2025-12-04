@@ -236,3 +236,232 @@ describe('downloadSVG', () => {
     });
 });
 
+describe('downloadImages', () => {
+    let container;
+    let originalCreateElement;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        originalCreateElement = document.createElement;
+
+        global.URL = {
+            createObjectURL: jest.fn().mockReturnValue('blob:mockurl')
+        };
+
+        global.Image = jest.fn().mockImplementation(() => {
+            const img = {
+                src: '',
+                onload: null,
+                onerror: null,
+                naturalWidth: 100,
+                naturalHeight: 50
+            };
+            return img;
+        });
+
+        global.HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({
+            drawImage: jest.fn()
+        });
+
+        global.HTMLCanvasElement.prototype.toBlob = jest.fn((callback) => {
+            callback(new Blob());
+        });
+    });
+
+    afterEach(() => {
+        document.body.removeChild(container);
+        
+        document.createElement = originalCreateElement;
+        delete global.URL;
+        delete global.Image;
+        delete global.HTMLCanvasElement.prototype.getContext;
+        delete global.HTMLCanvasElement.prototype.toBlob;
+    });
+
+    it('should create download buttons for images in .gem-ig-img-container', async () => {
+        // Create a test image container
+        const imgContainer = document.createElement('div');
+        imgContainer.classList.add('gem-ig-img-container');
+        const img = document.createElement('img');
+        img.src = 'test-image.png';
+        imgContainer.appendChild(img);
+        container.appendChild(imgContainer);
+
+        main.downloadImages();
+
+        // Simulate image loading
+        const imageInstance = global.Image.mock.results[0].value;
+        imageInstance.src = 'test-image.png';
+        
+        // Simulate onload event
+        if (imageInstance.onload) {
+            imageInstance.onload();
+        }
+
+        const downloadLink = imgContainer.querySelector('.gem-ig-download-btn');
+        expect(downloadLink).toBeTruthy();
+        expect(downloadLink.innerText).toBe(gematikLabels.ig.Download_Button_Image);
+        expect(downloadLink.download).toBe('test-image.png');
+        expect(downloadLink.href).toBe('blob:mockurl');
+    });
+
+    it('should handle multiple images in different containers', async () => {
+        // Create multiple image containers
+        const createImageContainer = (src) => {
+            const imgContainer = document.createElement('div');
+            imgContainer.classList.add('gem-ig-img-container');
+            const img = document.createElement('img');
+            img.src = src;
+            imgContainer.appendChild(img);
+            container.appendChild(imgContainer);
+            return img;
+        };
+
+        createImageContainer('image1.png');
+        createImageContainer('image2.jpg');
+
+        main.downloadImages();
+
+        // Simulate image onloads
+        const imageInstances = global.Image.mock.results.map(result => result.value);
+        imageInstances.forEach((img, index) => {
+            img.src = index === 0 ? 'image1.png' : 'image2.jpg';
+            if (img.onload) {
+                img.onload();
+            }
+        });
+
+        const downloadLinks = container.querySelectorAll('.gem-ig-download-btn');
+        expect(downloadLinks.length).toBe(2);
+        
+        expect(downloadLinks[0].innerText).toBe(gematikLabels.ig.Download_Button_Image);
+        expect(downloadLinks[0].download).toBe('image1.png');
+        
+        expect(downloadLinks[1].innerText).toBe(gematikLabels.ig.Download_Button_Image);
+        expect(downloadLinks[1].download).toBe('image2.jpg');
+    });
+
+    it('should handle errors during image processing', async () => {
+        // Create a test image container
+        const imgContainer = document.createElement('div');
+        imgContainer.classList.add('gem-ig-img-container');
+        const img = document.createElement('img');
+        img.src = 'test-image.png';
+        imgContainer.appendChild(img);
+        container.appendChild(imgContainer);
+
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Mock Image to simulate loading error
+        global.Image = jest.fn(() => {
+            const img = {
+                src: 'test-image.png',
+                onload: null,
+                onerror: () => {
+                    console.error('Error loading image:', new Error('Image load error'));
+                }
+            };
+            return img;
+        });
+
+        main.downloadImages();
+
+        // Simulate image error
+        const imageInstance = global.Image.mock.results[0].value;
+        if (imageInstance.onerror) {
+            imageInstance.onerror();
+        }
+
+        // Verify error handling
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'Error loading image:', 
+            expect.any(Error)
+        );
+
+        // No download link should be created
+        const downloadLink = imgContainer.querySelector('.gem-ig-download-btn');
+        expect(downloadLink).toBeFalsy();
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle canvas drawing errors', async () => {
+        // Create a test image container
+        const imgContainer = document.createElement('div');
+        imgContainer.classList.add('gem-ig-img-container');
+        const img = document.createElement('img');
+        img.src = 'test-image.png';
+        imgContainer.appendChild(img);
+        container.appendChild(imgContainer);
+
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Mock canvas.toBlob to throw an error
+        global.HTMLCanvasElement.prototype.toBlob = jest.fn(() => {
+            throw new Error('Canvas blob creation failed');
+        });
+
+        main.downloadImages();
+
+        // Simulate image onload
+        const imageInstance = global.Image.mock.results[0].value;
+        imageInstance.src = 'test-image.png';
+        if (imageInstance.onload) {
+            imageInstance.onload();
+        }
+
+        // Verify error handling
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'Error drawing image on canvas:', 
+            expect.any(Error)
+        );
+
+        // No download link should be created
+        const downloadLink = imgContainer.querySelector('.gem-ig-download-btn');
+        expect(downloadLink).toBeFalsy();
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle download link creation errors', async () => {
+        // Create a test image container
+        const imgContainer = document.createElement('div');
+        imgContainer.classList.add('gem-ig-img-container');
+        const img = document.createElement('img');
+        img.src = 'test-image.png';
+        imgContainer.appendChild(img);
+        container.appendChild(imgContainer);
+
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Mock download link creation to throw an error
+        document.createElement = jest.fn(() => {
+            console.error('Error creating download link for image:', new Error('Download link creation failed'));
+            throw new Error('Download link creation failed');
+        });
+
+        main.downloadImages();
+
+        // Simulate image onload
+        const imageInstance = global.Image.mock.results[0].value;
+        imageInstance.src = 'test-image.png';
+        if (imageInstance.onload) {
+            imageInstance.onload();
+        }
+
+        // Verify error handling
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            'Error creating download link for image:', 
+            expect.any(Error)
+        );
+
+        // No download link should be created
+        const downloadLink = imgContainer.querySelector('.gem-ig-download-btn');
+        expect(downloadLink).toBeFalsy();
+
+        consoleErrorSpy.mockRestore();
+    });
+});
+
