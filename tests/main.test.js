@@ -465,3 +465,170 @@ describe('downloadImages', () => {
     });
 });
 
+describe('enableExamples', () => {
+    let container;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+        document.body.removeChild(container);
+    });
+
+    it('should transform .gem-ig-example elements into toggleable wrappers', () => {
+        // Create a test example element
+        const exampleElement = document.createElement('div');
+        exampleElement.classList.add('gem-ig-example');
+        exampleElement.setAttribute('data-title', 'Test Example');
+        exampleElement.innerHTML = '<p>Example content</p>';
+        container.appendChild(exampleElement);
+
+        main.enableExamples();
+
+        // Check wrapper creation
+        const wrapper = container.querySelector('.gem-ig-example-wrapper');
+        expect(wrapper).toBeTruthy();
+
+        // Check header
+        const header = wrapper.querySelector('.gem-ig-example-header');
+        expect(header).toBeTruthy();
+
+        // Check toggle button
+        const toggleButton = header.querySelector('.gem-ig-example-toggle');
+        expect(toggleButton).toBeTruthy();
+        expect(toggleButton.textContent).toBe('▼');
+
+        // Check title
+        const title = header.querySelector('.gem-ig-example-title');
+        expect(title).toBeTruthy();
+        expect(title.textContent).toBe('Test Example');
+
+        // Check content wrapper
+        const contentWrapper = wrapper.querySelector('.gem-ig-example-content');
+        expect(contentWrapper).toBeTruthy();
+        expect(contentWrapper.innerHTML).toBe('<p>Example content</p>');
+        expect(contentWrapper.style.display).toBe('none');
+    });
+
+    it('should handle examples without a title attribute', () => {
+        const exampleElement = document.createElement('div');
+        exampleElement.classList.add('gem-ig-example');
+        exampleElement.innerHTML = '<p>Example content</p>';
+        container.appendChild(exampleElement);
+
+        main.enableExamples();
+
+        const title = container.querySelector('.gem-ig-example-title');
+        expect(title).toBeTruthy();
+        expect(title.textContent).toBe('');
+    });
+
+    it('should toggle content visibility when toggle button is clicked', () => {
+        const exampleElement = document.createElement('div');
+        exampleElement.classList.add('gem-ig-example');
+        exampleElement.setAttribute('data-title', 'Test Example');
+        exampleElement.innerHTML = '<p>Example content</p>';
+        container.appendChild(exampleElement);
+
+        main.enableExamples();
+
+        const toggleButton = container.querySelector('.gem-ig-example-toggle');
+        const contentWrapper = container.querySelector('.gem-ig-example-content');
+
+        // Initial state
+        expect(contentWrapper.style.display).toBe('none');
+        expect(toggleButton.textContent).toBe('▼');
+
+        // First click
+        toggleButton.click();
+        expect(contentWrapper.style.display).toBe('block');
+        expect(toggleButton.textContent).toBe('►');
+
+        // Second click
+        toggleButton.click();
+        expect(contentWrapper.style.display).toBe('none');
+        expect(toggleButton.textContent).toBe('▼');
+    });
+
+    it('should toggle content visibility when title is clicked', () => {
+        const exampleElement = document.createElement('div');
+        exampleElement.classList.add('gem-ig-example');
+        exampleElement.setAttribute('data-title', 'Test Example');
+        exampleElement.innerHTML = '<p>Example content</p>';
+        container.appendChild(exampleElement);
+
+        main.enableExamples();
+
+        const title = container.querySelector('.gem-ig-example-title');
+        const contentWrapper = container.querySelector('.gem-ig-example-content');
+
+        // Initial state
+        expect(contentWrapper.style.display).toBe('none');
+
+        // First click
+        title.click();
+        expect(contentWrapper.style.display).toBe('block');
+
+        // Second click
+        title.click();
+        expect(contentWrapper.style.display).toBe('none');
+    });
+
+    it('should handle multiple example elements', () => {
+        // Create multiple example elements
+        const createExampleElement = (title, content) => {
+            const exampleElement = document.createElement('div');
+            exampleElement.classList.add('gem-ig-example');
+            exampleElement.setAttribute('data-title', title);
+            exampleElement.innerHTML = content;
+            return exampleElement;
+        };
+
+        const example1 = createExampleElement('Example 1', '<p>Content 1</p>');
+        const example2 = createExampleElement('Example 2', '<p>Content 2</p>');
+        
+        container.appendChild(example1);
+        container.appendChild(example2);
+
+        main.enableExamples();
+
+        const wrapper1 = container.querySelectorAll('.gem-ig-example-wrapper')[0];
+        expect(wrapper1.querySelector('.gem-ig-example-title').textContent).toBe('Example 1');
+        expect(wrapper1.querySelector('.gem-ig-example-content').innerHTML).toBe('<p>Content 1</p>');
+
+        const wrapper2 = container.querySelectorAll('.gem-ig-example-wrapper')[1];
+        expect(wrapper2.querySelector('.gem-ig-example-title').textContent).toBe('Example 2');
+        expect(wrapper2.querySelector('.gem-ig-example-content').innerHTML).toBe('<p>Content 2</p>');
+    });
+
+    it('should remove original example elements after transformation', () => {
+        const exampleElement = document.createElement('div');
+        exampleElement.classList.add('gem-ig-example');
+        exampleElement.setAttribute('data-title', 'Test Example');
+        exampleElement.innerHTML = '<p>Example content</p>';
+        container.appendChild(exampleElement);
+
+        main.enableExamples();
+
+        const originalElement = container.querySelector('.gem-ig-example');
+        expect(originalElement).toBeFalsy();
+    });
+
+    it('should handle empty example elements gracefully', () => {
+        const exampleElement = document.createElement('div');
+        exampleElement.classList.add('gem-ig-example');
+        exampleElement.setAttribute('data-title', 'Empty Example');
+        container.appendChild(exampleElement);
+
+        main.enableExamples();
+
+        const wrapper = container.querySelector('.gem-ig-example-wrapper');
+        expect(wrapper).toBeTruthy();
+
+        const contentWrapper = wrapper.querySelector('.gem-ig-example-content');
+        expect(contentWrapper).toBeTruthy();
+        expect(contentWrapper.innerHTML).toBe('');
+    });
+});
