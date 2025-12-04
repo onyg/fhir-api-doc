@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "updateGoldenSnapshots": "node tests/helpers/updateGoldenSnapshot.mjs --output ./tests/golden_snapshot",
+    "updateGoldenSnapshot": "node tests/helpers/updateGoldenSnapshot.mjs --output ./tests/golden_snapshot",
     "build": "webpack --config webpack.prod.js",
     "dev": "webpack serve --config webpack.dev.js"
   },
