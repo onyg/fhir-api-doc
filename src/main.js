@@ -248,6 +248,7 @@ function convertBibliographyToLink(literatureData) {
     replaceMatches(document.body);
 
 }
+
 // Make public
 igtools.convertBibliographyToLink = convertBibliographyToLink;
 
@@ -255,7 +256,8 @@ export default {
     resizeSVGs,
     downloadSVG,
     downloadImages,
-    enableExamples
+    enableExamples,
+    convertBibliographyToLink
 }
 // Set up event listeners to initialize functions when the page has fully loaded
 document.addEventListener('DOMContentLoaded', () => {

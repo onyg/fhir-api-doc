@@ -632,3 +632,191 @@ describe('enableExamples', () => {
         expect(contentWrapper.innerHTML).toBe('');
     });
 });
+
+describe('convertBibliographyToLink', () => {
+    let originalBody;
+
+    beforeEach(() => {
+        // Store original body to restore after each test
+        originalBody = document.body.cloneNode(true);
+    });
+
+    afterEach(() => {
+        // Restore the original body to clean up DOM modifications
+        document.body.innerHTML = originalBody.innerHTML;
+    });
+
+    it('should convert single bibliography reference to a link', () => {
+        const literatureData = [
+            { 
+                key: 'REF1', 
+                link: 'https://example.com/ref1', 
+                author: 'John Doe', 
+                title: 'Sample Research' 
+            }
+        ];
+
+        document.body.innerHTML = 'This is a test [REF1] reference.';
+
+        main.convertBibliographyToLink(literatureData);
+
+        const link = document.body.querySelector('a.literature-link');
+        expect(link).toBeTruthy();
+        expect(link.href).toBe('https://example.com/ref1');
+        expect(link.textContent).toBe('[REF1]');
+        expect(link.title).toBe('John Doe: Sample Research');
+        expect(link.getAttribute('data-author')).toBe('John Doe');
+        expect(link.getAttribute('data-title')).toBe('Sample Research');
+        expect(link.target).toBe('_blank');
+    });
+
+    it('should handle multiple references in the same text node', () => {
+        const literatureData = [
+            { 
+                key: 'REF1', 
+                link: 'https://example.com/ref1', 
+                author: 'John Doe', 
+                title: 'First Research' 
+            },
+            { 
+                key: 'REF2', 
+                link: 'https://example.com/ref2', 
+                author: 'Jane Smith', 
+                title: 'Second Research' 
+            }
+        ];
+
+        document.body.innerHTML = 'Multiple references [REF1] and [REF2] in one text.';
+
+        main.convertBibliographyToLink(literatureData);
+
+        const links = document.body.querySelectorAll('a.literature-link');
+        expect(links.length).toBe(2);
+        
+        expect(links[0].href).toBe('https://example.com/ref1');
+        expect(links[0].textContent).toBe('[REF1]');
+        
+        expect(links[1].href).toBe('https://example.com/ref2');
+        expect(links[1].textContent).toBe('[REF2]');
+    });
+
+    it('should handle references in nested elements', () => {
+        const literatureData = [
+            { 
+                key: 'REF1', 
+                link: 'https://example.com/ref1', 
+                author: 'John Doe', 
+                title: 'Nested Research' 
+            }
+        ];
+
+        document.body.innerHTML = `
+            <div>
+                <p>Nested reference [REF1] in paragraph.</p>
+                <span>Another <strong>nested [REF1] reference</strong>.</span>
+            </div>
+        `;
+
+        main.convertBibliographyToLink(literatureData);
+
+        const links = document.body.querySelectorAll('a.literature-link');
+        expect(links.length).toBe(2);
+        
+        links.forEach(link => {
+            expect(link.href).toBe('https://example.com/ref1');
+            expect(link.textContent).toBe('[REF1]');
+        });
+    });
+
+    it('should not modify text when no matching references exist', () => {
+        const literatureData = [
+            { 
+                key: 'REF1', 
+                link: 'https://example.com/ref1', 
+                author: 'John Doe', 
+                title: 'Sample Research' 
+            }
+        ];
+
+        document.body.innerHTML = 'No matching reference [UNKNOWN] here.';
+
+        main.convertBibliographyToLink(literatureData);
+
+        const link = document.body.querySelector('a.literature-link');
+        expect(link).toBeFalsy();
+        expect(document.body.textContent).toBe('No matching reference [UNKNOWN] here.');
+    });
+
+    it('should handle empty literature data', () => {
+        document.body.innerHTML = 'Some text with [REF1] reference.';
+
+        main.convertBibliographyToLink([]);
+
+        const link = document.body.querySelector('a.literature-link');
+        expect(link).toBeFalsy();
+        expect(document.body.textContent).toBe('Some text with [REF1] reference.');
+    });
+
+    it('should be case-sensitive for reference keys', () => {
+        const literatureData = [
+            { 
+                key: 'REF1', 
+                link: 'https://example.com/ref1', 
+                author: 'John Doe', 
+                title: 'Sample Research' 
+            }
+        ];
+
+        document.body.innerHTML = 'Case-sensitive [ref1] reference.';
+
+        main.convertBibliographyToLink(literatureData);
+
+        const link = document.body.querySelector('a.literature-link');
+        expect(link).toBeFalsy();
+        expect(document.body.textContent).toBe('Case-sensitive [ref1] reference.');
+    });
+
+    it('should handle references with special characters in keys', () => {
+        const literatureData = [
+            { 
+                key: 'REF-1.2', 
+                link: 'https://example.com/ref-special', 
+                author: 'John Doe', 
+                title: 'Special Chars Research' 
+            }
+        ];
+
+        document.body.innerHTML = 'Special characters reference [REF-1.2].';
+
+        main.convertBibliographyToLink(literatureData);
+
+        const link = document.body.querySelector('a.literature-link');
+        expect(link).toBeTruthy();
+        expect(link.href).toBe('https://example.com/ref-special');
+    });
+
+    it('should not interfere with existing links', () => {
+        const literatureData = [
+            { 
+                key: 'REF1', 
+                link: 'https://example.com/ref1', 
+                author: 'John Doe', 
+                title: 'Sample Research' 
+            }
+        ];
+
+        document.body.innerHTML = `
+            <p>Existing link <a href="https://existing.com">with text</a> and [REF1] reference.</p>
+        `;
+
+        main.convertBibliographyToLink(literatureData);
+
+        const existingLink = document.body.querySelector('a[href="https://existing.com"]');
+        expect(existingLink).toBeTruthy();
+        expect(existingLink.textContent).toBe('with text');
+
+        const bibLink = document.body.querySelector('a.literature-link');
+        expect(bibLink).toBeTruthy();
+        expect(bibLink.textContent).toBe('[REF1]');
+    });
+});
