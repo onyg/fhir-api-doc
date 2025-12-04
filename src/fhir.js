@@ -171,43 +171,53 @@ function getOperation(operationDefinition, invokeLevel, restEntry, resourceType=
 function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resourceType) {
     const capabilityStatement = utils.toJson(data);
     const operationDefinition = utils.toJson(opData);
+
     const { extension: extensions = [] } = capabilityStatement;
     const globalHeaders = extractHeaderValues(extensions);
     const globalResponses = extractResponseInfoValues(extensions);
+
     const { rest: rest = [] } = capabilityStatement;
-    for (const restEntry of rest) {
-        const operation = getOperation(operationDefinition, invokeLevel, restEntry, resourceType)
 
-        let localHeaders = [];
-        let localResponses = [];
-        const searchParams = (operationDefinition?.parameter || [])
-            .filter(param => param.use === "in")
-            .map(({ name, type, documentation = '-' }) => ({
-                name,
-                type,
-                documentation
-            }));
-
-        localHeaders = operation?.extension
-            ? extractHeaderValues(operation.extension)
-            : [];
-
-        localResponses = operation?.extension
-            ? extractResponseInfoValues(operation.extension)
-            : [];
-        let methods = extractHttpMethods(operationDefinition.extension)
+    if (!Array.isArray(rest) || rest.length === 0) {
         return {
-            baseUrl: extractBaseUrl(extensions),
-            code: `${operationDefinition.code}`,
-            formats: capabilityStatement.format,
-            headerParams: [...localHeaders, ...globalHeaders],
-            responseInfos: [...localResponses, ...globalResponses],
-            searchParams: searchParams,
-            methods: methods
+            methods:[]
         };
     }
+
+    let operation;
+    for (const restEntry of rest) {
+        operation = getOperation(operationDefinition, invokeLevel, restEntry, resourceType);
+        if (operation) {
+            break;
+        }
+    }
+
+    const searchParams = (operationDefinition?.parameter || [])
+        .filter(param => param.use === "in")
+        .map(({ name, type, documentation = '-' }) => ({
+            name,
+            type,
+            documentation
+        }));
+
+    const localHeaders = operation?.extension
+        ? extractHeaderValues(operation.extension)
+        : [];
+
+    const localResponses = operation?.extension
+        ? extractResponseInfoValues(operation.extension)
+        : [];
+
+    const methods = extractHttpMethods(operationDefinition.extension)
+
     return {
-        methods:[]
+        baseUrl: extractBaseUrl(extensions),
+        code: `${operationDefinition.code}`,
+        formats: capabilityStatement.format,
+        headerParams: [...localHeaders, ...globalHeaders],
+        responseInfos: [...localResponses, ...globalResponses],
+        searchParams: searchParams,
+        methods: methods
     };
 }
 
