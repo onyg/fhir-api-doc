@@ -209,7 +209,10 @@ function renderCodeBlocks() {
             const classes = Array.from(codeElement.classList);
             const languageClass = classes.find((cls) => cls.includes("language-"));
             
-            if (languageClass && !languageClass.includes('plaintext')) {
+            const plaintextClasses = ['plaintext', 'txt', 'text'];
+            const isPlaintext = languageClass && plaintextClasses.some(cls => languageClass.includes(cls));
+            
+            if (languageClass && !isPlaintext) {
                 const button = utils.createCopyButton(codeElement.textContent);
                 parentElement.insertBefore(button, codeElement);
             }
@@ -257,6 +260,7 @@ export default {
     downloadSVG,
     downloadImages,
     enableExamples,
+    renderCodeBlocks,
     convertBibliographyToLink
 }
 // Set up event listeners to initialize functions when the page has fully loaded

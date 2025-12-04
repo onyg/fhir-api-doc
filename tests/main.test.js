@@ -1,4 +1,5 @@
 import main from '../src/main.js';
+import utils from '../src/utils.js';
 import gematikLabels from '../src/labels.js';
 
 describe('resizeSVGs', () => {
@@ -818,5 +819,170 @@ describe('convertBibliographyToLink', () => {
         const bibLink = document.body.querySelector('a.literature-link');
         expect(bibLink).toBeTruthy();
         expect(bibLink.textContent).toBe('[REF1]');
+    });
+});
+
+describe('renderCodeBlocks', () => {
+    let container;
+    let mockCreateCopyButton;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        // Mock utils.createCopyButton to track calls and return a mock button
+        mockCreateCopyButton = jest.spyOn(utils, 'createCopyButton');
+        mockCreateCopyButton.mockImplementation((text) => {
+            const button = document.createElement('button');
+            button.classList.add('copy-button');
+            button.textContent = 'Copy';
+            button.setAttribute('data-copy-text', text);
+            return button;
+        });
+    });
+
+    afterEach(() => {
+        document.body.removeChild(container);
+        mockCreateCopyButton.mockRestore();
+    });
+
+    it('should add copy button to code blocks with language classes', () => {
+        // Create a code block with a language class
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        code.classList.add('language-javascript');
+        code.textContent = 'console.log("Hello, world!");';
+        pre.appendChild(code);
+        container.appendChild(pre);
+
+        main.renderCodeBlocks();
+
+        // Check that copy button was created and inserted
+        const copyButton = pre.querySelector('.copy-button');
+        expect(copyButton).toBeTruthy();
+        expect(copyButton.getAttribute('data-copy-text')).toBe('console.log("Hello, world!");');
+        expect(pre.children[0]).toBe(copyButton);
+        expect(pre.children[1]).toBe(code);
+    });
+
+    it('should not add copy button to code blocks without language classes', () => {
+        // Create a code block without a language class
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        code.textContent = 'Some plain text';
+        pre.appendChild(code);
+        container.appendChild(pre);
+
+        main.renderCodeBlocks();
+
+        // Check that no copy button was created
+        const copyButton = pre.querySelector('.copy-button');
+        expect(copyButton).toBeFalsy();
+    });
+
+    it('should not add copy button to code blocks with plaintext-like classes', () => {
+        // Test multiple plaintext-like classes
+        const plaintextClasses = ['language-plaintext', 'language-txt', 'language-text'];
+        
+        plaintextClasses.forEach(plaintextClass => {
+            const pre = document.createElement('pre');
+            const code = document.createElement('code');
+            code.classList.add(plaintextClass);
+            code.textContent = 'Some plain text';
+            pre.appendChild(code);
+            container.appendChild(pre);
+        });
+
+        main.renderCodeBlocks();
+
+        // Check that no copy buttons were created for any plaintext-like classes
+        const copyButtons = container.querySelectorAll('.copy-button');
+        expect(copyButtons.length).toBe(0);
+    });
+
+    it('should handle multiple code blocks with different language classes', () => {
+        // Create multiple code blocks
+        const createCodeBlock = (languageClass, text) => {
+            const pre = document.createElement('pre');
+            const code = document.createElement('code');
+            code.classList.add(languageClass);
+            code.textContent = text;
+            pre.appendChild(code);
+            return pre;
+        };
+
+        const codeBlocks = [
+            createCodeBlock('language-javascript', 'console.log("JS");'),
+            createCodeBlock('language-python', 'print("Python")'),
+            createCodeBlock('language-html', '<div>HTML</div>')
+        ];
+
+        codeBlocks.forEach(block => container.appendChild(block));
+
+        main.renderCodeBlocks();
+
+        // Check that copy buttons were added to language-specific blocks
+        codeBlocks.forEach(pre => {
+            const code = pre.querySelector('code');
+            const copyButton = pre.querySelector('.copy-button');
+            
+            const plaintextClasses = ['language-plaintext', 'language-txt', 'language-text'];
+            const isPlaintext = plaintextClasses.some(cls => code.classList.contains(cls));
+            
+            if (isPlaintext) {
+                expect(copyButton).toBeFalsy();
+            } else {
+                expect(copyButton).toBeTruthy();
+                expect(copyButton.getAttribute('data-copy-text')).toBe(code.textContent);
+            }
+        });
+    });
+
+    it('should handle code blocks with multiple classes', () => {
+        // Create a code block with multiple classes
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        code.classList.add('language-javascript', 'hljs', 'custom-class');
+        code.textContent = 'const x = 42;';
+        pre.appendChild(code);
+        container.appendChild(pre);
+
+        main.renderCodeBlocks();
+
+        // Check that copy button was created
+        const copyButton = pre.querySelector('.copy-button');
+        expect(copyButton).toBeTruthy();
+        expect(copyButton.getAttribute('data-copy-text')).toBe('const x = 42;');
+    });
+
+    it('should handle empty code blocks', () => {
+        // Create an empty code block with a language class
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        code.classList.add('language-javascript');
+        code.textContent = '';
+        pre.appendChild(code);
+        container.appendChild(pre);
+
+        main.renderCodeBlocks();
+
+        // Check that copy button was created even for empty blocks
+        const copyButton = pre.querySelector('.copy-button');
+        expect(copyButton).toBeTruthy();
+        expect(copyButton.getAttribute('data-copy-text')).toBe('');
+    });
+
+    it('should not modify code elements not inside pre tags', () => {
+        // Create a code element not inside a pre tag
+        const code = document.createElement('code');
+        code.classList.add('language-javascript');
+        code.textContent = 'console.log("Not in pre")';
+        container.appendChild(code);
+
+        main.renderCodeBlocks();
+
+        // Check that no copy button was created
+        const copyButton = container.querySelector('.copy-button');
+        expect(copyButton).toBeFalsy();
     });
 });
