@@ -407,6 +407,7 @@ const renderApiExample = (parent, buttonParent, example, data, exampleList, butt
     let content = data;
     if (renderType.toUpperCase() == "IG-FRAGMENT") {
         content = utils.createElement('div', {classes:['html-example'], innerHTML: data}).innerText || '';
+        content = content.replace(/\u{1F517}/gu, ''); // 🔗 remove
     }
     // The Copy Button
     exampleContainer.appendChild(createCopyButton(content, exampleType.toLowerCase()));

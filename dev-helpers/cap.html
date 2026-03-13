@@ -28,6 +28,71 @@
           data-api-fhir-interaction="search-type"
           data-api-operation-id="listMedications_MedicationSvc">
           <div id="CapabilityStatement" data-url="./CapabilityStatement-epa-medication-service-server.json"></div>
+            <div id="Response-Examples">
+      <div data-name="application/fhir+json" data-type="JSON" data-render="ig-Fragment">
+        {
+  "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle">resourceType</a>" : "Bundle",
+  "<a href="http://hl7.org/fhir/R4/resource.html#Bundle.id">id</a>" : "example-searchset-patient",
+  "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.type">type</a>" : "searchset",
+  "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.total">total</a>" : 1,
+  "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.link">link</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.link.relation">relation</a>" : "self",
+      "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.link.url">url</a>" : "/epa/patient/api/v1/fhir/Patient?_count=10"
+    }
+  ],
+  "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.entry">entry</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.entry.fullUrl">fullUrl</a>" : "http://epa4all/epa/patient/api/v1/fhir/Patient/7eeb4e81-ce38-4d70-84fc-9ca4c7d0939c",
+      "<a href="http://hl7.org/fhir/R4/patient.html#Patient">resource</a>" : {
+        "<a href="http://hl7.org/fhir/R4/patient.html">resourceType</a>" : "Patient",
+        "<a href="http://hl7.org/fhir/R4/resource.html#Patient.id">id</a>" : "7eeb4e81-ce38-4d70-84fc-9ca4c7d0939c",
+        "<a href="http://hl7.org/fhir/R4/resource.html#Patient.meta">meta</a>" : {
+          "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.versionId">versionId</a>" : "2",
+          "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.lastUpdated">lastUpdated</a>" : "2026-01-19T14:37:12+01:00",
+          "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+            <a href="StructureDefinition-epa-patient.html" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/epa/StructureDefinition/epa-patient|1.3.0"
+          ]
+        },
+        "<a href="http://hl7.org/fhir/R4/patient.html#Patient.identifier">identifier</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.system">system</a>" : "http://fhir.de/sid/gkv/kvid-10",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.value">value</a>" : "G995030566"
+          }
+        ],
+        "<a href="http://hl7.org/fhir/R4/patient.html#Patient.name">name</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#HumanName#HumanName.use">use</a>" : "official",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#HumanName#HumanName.family">family</a>" : "Mustermann",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#HumanName#HumanName.given">given</a>" : [
+              "Erika"
+            ]
+          },
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#HumanName#HumanName.use">use</a>" : "maiden",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#HumanName#HumanName.family">family</a>" : "Gabler",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#HumanName#HumanName.family">_family</a>" : {
+              "<a href="http://hl7.org/fhir/R4/datatypes.html#Element#string.extension">extension</a>" : [
+                {
+                  "<a href="http://hl7.org/fhir/R4/extensibility.html#Extension#Extension.url">url</a>" : "http://hl7.org/fhir/StructureDefinition/humanname-own-name",
+                  "<a href="http://hl7.org/fhir/R4/extensibility.html#Extension#Extension.value_x_">valueString</a>" : "Gabler"
+                }
+              ]
+            }
+          }
+        ],
+        "<a href="http://hl7.org/fhir/R4/patient.html#Patient.gender">gender</a>" : "female",
+        "<a href="http://hl7.org/fhir/R4/patient.html#Patient.birthDate">birthDate</a>" : "1964-08-12"
+      },
+      "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.entry.search">search</a>" : {
+        "<a href="http://hl7.org/fhir/R4/bundle.html#Bundle.entry.search.mode">mode</a>" : "match"
+      }
+    }
+  ]
+}
+
+      </div>
+            </div>
         </div>
         <div class="gematik-apidoc"
           data-api-type="FHIRResource"
