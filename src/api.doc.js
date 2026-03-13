@@ -375,29 +375,6 @@ function removeLeadingTabs(text) {
     return text.replace(/^[\t ]+/gm, '');
 }
 
-const createCopyButton = (data, language = null) => {
-    const wrapper = utils.createElement('div', { classes: ['gem-ig-copy-container'] });
-    const languageElement = utils.createElement('span', { classes: ['gem-id-code-lang'] })
-    if (language) {
-        languageElement.innerText = language.toLowerCase();
-    }
-    // The Copy Button
-    const buttonWrapper = utils.createElement('div', { classes: ['gem-ig-copy-button-wrapper'] });
-    const button = utils.createElement('button', { innerHTML: gematikLabels.apiDoc.Copy_Button_Label});
-    // Add click event listener to copy button
-    button.addEventListener('click', function () {
-        navigator.clipboard.writeText(data).then(() => {
-            button.innerText = gematikLabels.apiDoc.Copied_Button_Label;
-            setTimeout(() => button.innerText = gematikLabels.apiDoc.Copy_Button_Label, 2000);
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-        });
-    });
-    wrapper.appendChild(languageElement);
-    buttonWrapper.appendChild(button);
-    wrapper.appendChild(buttonWrapper);
-    return wrapper;
-};
 
 const renderApiExample = (parent, buttonParent, example, data, exampleList, buttonList) => {
     const exampleType = example.type?.toLowerCase() || 'html'
@@ -410,7 +387,7 @@ const renderApiExample = (parent, buttonParent, example, data, exampleList, butt
         content = content.replace(/\u{1F517}/gu, ''); // 🔗 remove
     }
     // The Copy Button
-    exampleContainer.appendChild(createCopyButton(content, exampleType.toLowerCase()));
+    exampleContainer.appendChild(utils.createCopyButton(content, exampleType.toLowerCase()));
     if (renderType.toUpperCase() == "HTML") {
         exampleContainer.appendChild(
             utils.createElement('div', {classes:['html-example'], innerHTML: content})
@@ -722,7 +699,6 @@ export default {
     renderWithOperationDefinition,
     parseBaseUrl,
     removeLeadingTabs,
-    createCopyButton,
     renderApiExample,
     appendExampleElements,
     createOperationMainBlock,

@@ -202,25 +202,6 @@ function fhirDataTable() {
 }
 
 
-function renderCodeBlocks() {
-    document.querySelectorAll('code').forEach(codeElement => {
-        const parentElement = codeElement.parentElement;
-        if (parentElement && parentElement.tagName.toLowerCase() === 'pre') {
-            const classes = Array.from(codeElement.classList);
-            const languageClass = classes.find((cls) => cls.includes("language-"));
-            
-            const plaintextClasses = ['plaintext', 'txt', 'text'];
-            const isPlaintext = languageClass && plaintextClasses.some(cls => languageClass.includes(cls));
-            
-            if (languageClass && !isPlaintext) {
-                const button = utils.createCopyButton(codeElement.textContent);
-                parentElement.insertBefore(button, codeElement);
-            }
-        }
-    });
-}
-
-
 function convertBibliographyToLink(literatureData) {
 
     function replaceMatches(node) {
@@ -260,7 +241,6 @@ export default {
     downloadSVG,
     downloadImages,
     enableExamples,
-    renderCodeBlocks,
     convertBibliographyToLink
 }
 // Set up event listeners to initialize functions when the page has fully loaded
@@ -270,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadSVG();
         downloadImages();
         enableExamples();
-        renderCodeBlocks();
         fhirDataTable();
     } catch (error) {
         console.error('Error initializing functions:', error);
