@@ -6,7 +6,12 @@ const defaultRequirements = {
     SHOULD: "SOLL",
     SHOULD_NOT: "SOLL NICHT",
     MAY: "KANN",
+    TESTPROCEDURE: "Pr&uuml;fverfahren",
 };
+
+const defaultCommon = {
+    FOR: "f&uuml;r",
+}
 
 const defaultIg = {
     Download_Button_Image: "Bild herunterladen",
@@ -41,6 +46,10 @@ const defaultApiDoc = {
 };
 
 const gematikLabels = {
+    common: {
+        ...defaultCommon,
+        ...(customGematikLabels.common || {}),
+    },
     requirements: {
         ...defaultRequirements,
         ...(customGematikLabels.requirements || {}),

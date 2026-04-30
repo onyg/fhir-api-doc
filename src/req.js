@@ -1,4 +1,5 @@
 import utils from './utils.js';
+import gematikLabels from './labels.js'
 
 document.addEventListener("DOMContentLoaded", () => {
     renderRequirements();
@@ -37,42 +38,59 @@ function renderRequirements() {
     const requirements = document.querySelectorAll('requirement');
 
     requirements.forEach(req => {
-
         const reqKey = req.getAttribute('key') || '';
         const reqVersion = parseFloat(req.getAttribute('version')) || 0;
 
-        // version starts with (1 -> "01", 9 -> "09", 10 -> "10")
-        const formattedVersion = reqVersion > 0 
-            ? String(reqVersion).padStart(2, '0') 
+        const formattedVersion = reqVersion > 0
+            ? String(reqVersion).padStart(2, '0')
             : '';
 
         const combinedReqKey = reqKey && reqVersion > 0
-            ? `${reqKey}-${formattedVersion}` 
+            ? `${reqKey}-${formattedVersion}`
             : reqKey;
 
-        // actor with attribute version for backwards compatibility
+        const actors = Array.from(req.querySelectorAll('actor'));
+
         let actorText = req.getAttribute('actor') || '';
-        const actors = req.querySelectorAll('actor') || [];
+
         if (actors.length > 0) {
-            actorText = Array.from(actors)
-                .map(actor => {
-                    const name = actor.getAttribute('name');
-                    return name;
-                }).filter(Boolean).join(', ');
+            actorText = actors
+                .map(actor => actor.getAttribute('description') || actor.getAttribute('name'))
+                .filter(Boolean)
+                .join(', ');
         }
+
+        const testProceduresByActor = actors
+            .map(actor => {
+                const actorName = actor.getAttribute('description') || actor.getAttribute('name') || '';
+
+                const testProcedures = Array.from(actor.children)
+                    .filter(child => child.tagName.toLowerCase() === 'testprocedure')
+                    .map(tp => ({
+                        id: tp.getAttribute('id') || '',
+                        text: tp.textContent.trim()
+                    }));
+
+                return {
+                    actorName,
+                    testProcedures
+                };
+            })
+            .filter(entry => entry.actorName && entry.testProcedures.length > 0);
 
         const titleText = req.getAttribute('title') || '';
         const conformanceText = utils.translateExpectation(req.getAttribute('conformance') || '');
-
         const descriptionHTML = cleanRequirementDescription(req.innerHTML.trim());
 
         const reqDiv = document.createElement('div');
         reqDiv.classList.add('requirement');
-        if(combinedReqKey) {
+
+        if (combinedReqKey) {
             reqDiv.id = combinedReqKey;
         }
+
         const headingParts = [
-            combinedReqKey, 
+            combinedReqKey,
             titleText,
             conformanceText
         ].filter(Boolean);
@@ -82,7 +100,8 @@ function renderRequirements() {
             heading.classList.add('heading');
             heading.textContent = headingParts.join(' - ');
             reqDiv.appendChild(heading);
-            if(combinedReqKey) {
+
+            if (combinedReqKey) {
                 const anchor = document.createElement('a');
                 anchor.href = `#${combinedReqKey}`;
                 anchor.className = 'anchorjs-link';
@@ -98,6 +117,46 @@ function renderRequirements() {
             const descP = document.createElement('p');
             descP.innerHTML = `${descriptionHTML} <span class="gem-req-workitem-fields-end-inner"><span class="gem-req-actor">${actorText}</span> [<=]</span>`;
             reqDiv.appendChild(descP);
+        }
+
+        const testProcedureRows = testProceduresByActor
+            .flatMap(entry =>
+                entry.testProcedures
+                    .filter(tp => tp.text)
+                    .map(tp => ({
+                        actorName: entry.actorName,
+                        text: tp.text
+                    }))
+            );
+
+        if (testProcedureRows.length > 0) {
+            const details = document.createElement('details');
+            details.classList.add('gem-req-testprocedures');
+
+            const summary = document.createElement('summary');
+            summary.innerHTML = `${gematikLabels.requirements.TESTPROCEDURE} ${gematikLabels.common.FOR} ${combinedReqKey}`;
+            details.appendChild(summary);
+
+            const table = document.createElement('table');
+            const tbody = document.createElement('tbody');
+
+            testProcedureRows.forEach(row => {
+                const tr = document.createElement('tr');
+
+                const actorTd = document.createElement('td');
+                actorTd.textContent = row.actorName;
+
+                const textTd = document.createElement('td');
+                textTd.textContent = row.text;
+
+                tr.appendChild(actorTd);
+                tr.appendChild(textTd);
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+            details.appendChild(table);
+            reqDiv.appendChild(details);
         }
 
         req.parentElement.replaceChild(reqDiv, req);

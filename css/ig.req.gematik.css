@@ -34,6 +34,42 @@
     background-color: rgba(255, 238, 0, 0.445);
 }
 
-.requirement .gem-req-actor{
+.requirement .gem-req-actor {
     font-style: italic;
 }
+
+.requirement .gem-req-testprocedures {
+    font-style: italic;
+    font-size: small;
+    color: rgb(27, 27, 27);
+}
+
+.requirement .gem-req-testprocedures summary {
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+.requirement .gem-req-testprocedures table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.requirement .gem-req-testprocedures table tr {
+    border-top: 1px solid #ccc;
+}
+
+.requirement .gem-req-testprocedures table td {
+    padding: 6px 8px;
+}
+
+.requirement .gem-req-testprocedures table tr:first-child {
+    border-top: 1px dashed #c0c0c0;
+}
+
+.requirement .gem-req-testprocedures table td:first-child {
+    white-space: nowrap;
+    width: 200px;
+    max-width: 300px;
+    word-break: break-word;
+}
+
