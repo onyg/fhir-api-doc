@@ -113,6 +113,8 @@ function downloadImages() {
 }
 
 function enableExamples() {
+    const OPEN_SYM = '▼';
+    const CLOSE_SYM = '►';
     document.querySelectorAll('.gem-ig-example').forEach(exampleElement => {
         const wrapper = document.createElement('div');
         wrapper.classList.add('gem-ig-example-wrapper');
@@ -137,15 +139,15 @@ function enableExamples() {
         contentWrapper.style.display = 'none';
         wrapper.appendChild(contentWrapper);
 
-        toggleButton.textContent = '▼';
+        toggleButton.textContent = CLOSE_SYM;
         // Add button click
         const toggleContent = ()  => {
             if (contentWrapper.style.display === 'none') {
                 contentWrapper.style.display = 'block';
-                toggleButton.textContent = '►';
+                toggleButton.textContent = OPEN_SYM;
             } else {
                 contentWrapper.style.display = 'none';
-                toggleButton.textContent = '▼';
+                toggleButton.textContent = CLOSE_SYM;
             }
         }
         toggleButton.addEventListener('click', toggleContent);

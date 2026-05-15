@@ -55,7 +55,7 @@
 }
 
 .requirement .gem-req-testprocedures table tr {
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #dddbdb;
 }
 
 .requirement .gem-req-testprocedures table td {
@@ -73,3 +73,21 @@
     word-break: break-word;
 }
 
+.requirement .gem-req-testprocedures tr:nth-child(even),
+.requirement .gem-req-testprocedures tr:nth-child(odd) {
+    background: inherit !important;
+}
+
+.requirement .gem-req-testprocedures summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.requirement .gem-req-testprocedures summary::-webkit-details-marker {
+    display: none;
+}
+
+.requirement .gem-req-details-icon {
+    display: inline-block;
+    width: 1em;
+}

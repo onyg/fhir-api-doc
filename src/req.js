@@ -130,14 +130,36 @@ function renderRequirements() {
             );
 
         if (testProcedureRows.length > 0) {
+            const OPEN_SYM = '▼';
+            const CLOSE_SYM = '►';
+
             const details = document.createElement('details');
             details.classList.add('gem-req-testprocedures');
 
             const summary = document.createElement('summary');
-            summary.innerHTML = `${gematikLabels.requirements.TESTPROCEDURE} ${gematikLabels.common.FOR} ${combinedReqKey}`;
+
+            const icon = document.createElement('span');
+            icon.classList.add('gem-req-details-icon');
+            icon.textContent = CLOSE_SYM;
+
+            details.addEventListener('toggle', () => {
+                icon.textContent = details.open
+                    ? OPEN_SYM
+                    : CLOSE_SYM;
+            });
+
+            summary.appendChild(icon);
+
+            const summaryText = document.createElement('span');
+            summaryText.innerHTML =
+                ` ${gematikLabels.requirements.TESTPROCEDURE} ${gematikLabels.common.FOR} ${combinedReqKey}`;
+
+            summary.appendChild(summaryText);
+
             details.appendChild(summary);
 
             const table = document.createElement('table');
+
             const tbody = document.createElement('tbody');
 
             testProcedureRows.forEach(row => {

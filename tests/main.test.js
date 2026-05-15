@@ -499,7 +499,7 @@ describe('enableExamples', () => {
         // Check toggle button
         const toggleButton = header.querySelector('.gem-ig-example-toggle');
         expect(toggleButton).toBeTruthy();
-        expect(toggleButton.textContent).toBe('▼');
+        expect(toggleButton.textContent).toBe('►');
 
         // Check title
         const title = header.querySelector('.gem-ig-example-title');
@@ -540,17 +540,17 @@ describe('enableExamples', () => {
 
         // Initial state
         expect(contentWrapper.style.display).toBe('none');
-        expect(toggleButton.textContent).toBe('▼');
+        expect(toggleButton.textContent).toBe('►');
 
         // First click
         toggleButton.click();
         expect(contentWrapper.style.display).toBe('block');
-        expect(toggleButton.textContent).toBe('►');
+        expect(toggleButton.textContent).toBe('▼');
 
         // Second click
         toggleButton.click();
         expect(contentWrapper.style.display).toBe('none');
-        expect(toggleButton.textContent).toBe('▼');
+        expect(toggleButton.textContent).toBe('►');
     });
 
     it('should toggle content visibility when title is clicked', () => {
