@@ -151,6 +151,7 @@ function renderRequirements() {
             summary.appendChild(icon);
 
             const summaryText = document.createElement('span');
+            summaryText.classList.add('gem-req-details-title');
             summaryText.innerHTML =
                 ` ${gematikLabels.requirements.TESTPROCEDURE} ${gematikLabels.common.FOR} ${combinedReqKey}`;
 

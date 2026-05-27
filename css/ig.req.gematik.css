@@ -40,7 +40,7 @@
 
 .requirement .gem-req-testprocedures {
     font-style: italic;
-    font-size: small;
+    font-size: 12px;
     color: rgb(27, 27, 27);
 }
 
@@ -51,6 +51,7 @@
 
 .requirement .gem-req-testprocedures table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
 }
 
@@ -60,6 +61,8 @@
 
 .requirement .gem-req-testprocedures table td {
     padding: 6px 8px;
+    font-size: 11px;
+    vertical-align: top;
 }
 
 .requirement .gem-req-testprocedures table tr:first-child {
@@ -67,10 +70,16 @@
 }
 
 .requirement .gem-req-testprocedures table td:first-child {
-    white-space: nowrap;
-    width: 200px;
-    max-width: 300px;
-    word-break: break-word;
+    width: 50%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.requirement .gem-req-testprocedures table td:last-child {
+    width: 50%;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .requirement .gem-req-testprocedures tr:nth-child(even),
@@ -91,3 +100,8 @@
     display: inline-block;
     width: 1em;
 }
+
+.requirement .gem-req-details-title {
+    width: 90%;
+}
+
