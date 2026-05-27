@@ -34,6 +34,7 @@ function cleanRequirementDescription(desc) {
     return desc;
 }
 
+
 function renderRequirements() {
     const requirements = document.querySelectorAll('requirement');
 
@@ -55,17 +56,25 @@ function renderRequirements() {
 
         if (actors.length > 0) {
             actorText = actors
-                .map(actor => actor.getAttribute('description') || actor.getAttribute('name'))
+                .map(actor =>
+                    actor.getAttribute('description') ||
+                    actor.getAttribute('name')
+                )
                 .filter(Boolean)
                 .join(', ');
         }
 
         const testProceduresByActor = actors
             .map(actor => {
-                const actorName = actor.getAttribute('description') || actor.getAttribute('name') || '';
+                const actorName =
+                    actor.getAttribute('description') ||
+                    actor.getAttribute('name') ||
+                    '';
 
                 const testProcedures = Array.from(actor.children)
-                    .filter(child => child.tagName.toLowerCase() === 'testprocedure')
+                    .filter(child =>
+                        child.tagName.toLowerCase() === 'testprocedure'
+                    )
                     .map(tp => ({
                         id: tp.getAttribute('id') || '',
                         text: tp.textContent.trim()
@@ -76,14 +85,39 @@ function renderRequirements() {
                     testProcedures
                 };
             })
-            .filter(entry => entry.actorName && entry.testProcedures.length > 0);
+            .filter(entry =>
+                entry.actorName &&
+                entry.testProcedures.length > 0
+            );
+
+        const testProcedureRows = testProceduresByActor
+            .flatMap(entry =>
+                entry.testProcedures.map(tp => ({
+                    actorName: entry.actorName,
+                    id: tp.id || '',
+                    text: tp.text || ''
+                }))
+            );
+
+        const hasTestProcedureText = testProcedureRows
+            .some(row => row.text.trim());
 
         const titleText = req.getAttribute('title') || '';
-        const conformanceText = utils.translateExpectation(req.getAttribute('conformance') || '');
-        const descriptionHTML = cleanRequirementDescription(req.innerHTML.trim());
+        const conformanceText =
+            utils.translateExpectation(
+                req.getAttribute('conformance') || ''
+            );
+
+        const descriptionHTML =
+            cleanRequirementDescription(req.innerHTML.trim());
 
         const reqDiv = document.createElement('div');
         reqDiv.classList.add('requirement');
+
+        const reqLastlineSpan = document.createElement('span');
+        reqLastlineSpan.classList.add(
+            'gem-req-workitem-fields-end-inner'
+        );
 
         if (combinedReqKey) {
             reqDiv.id = combinedReqKey;
@@ -99,14 +133,21 @@ function renderRequirements() {
             const heading = document.createElement('p');
             heading.classList.add('heading');
             heading.textContent = headingParts.join(' - ');
+
             reqDiv.appendChild(heading);
 
             if (combinedReqKey) {
                 const anchor = document.createElement('a');
+
                 anchor.href = `#${combinedReqKey}`;
                 anchor.className = 'anchorjs-link';
+
                 anchor.setAttribute('aria-label', 'Anchor');
-                anchor.setAttribute('data-anchorjs-icon', '');
+                anchor.setAttribute(
+                    'data-anchorjs-icon',
+                    ''
+                );
+
                 anchor.style.font = '1em / 1 anchorjs-icons';
                 anchor.style.paddingLeft = '0.375em';
                 heading.appendChild(anchor);
@@ -115,23 +156,15 @@ function renderRequirements() {
 
         if (descriptionHTML) {
             const descP = document.createElement('p');
-            descP.innerHTML = `${descriptionHTML} <span class="gem-req-workitem-fields-end-inner"><span class="gem-req-actor">${actorText}</span> [<=]</span>`;
+            descP.innerHTML = descriptionHTML;
+
             reqDiv.appendChild(descP);
         }
 
-        const testProcedureRows = testProceduresByActor
-            .flatMap(entry =>
-                entry.testProcedures
-                    .filter(tp => tp.text)
-                    .map(tp => ({
-                        actorName: entry.actorName,
-                        text: tp.text
-                    }))
-            );
-
-        if (testProcedureRows.length > 0) {
+        if (hasTestProcedureText) {
             const OPEN_SYM = '▼';
             const CLOSE_SYM = '►';
+            // const CLOSE_SYM = '◄';
 
             const details = document.createElement('details');
             details.classList.add('gem-req-testprocedures');
@@ -148,18 +181,30 @@ function renderRequirements() {
                     : CLOSE_SYM;
             });
 
-            summary.appendChild(icon);
-
             const summaryText = document.createElement('span');
             summaryText.classList.add('gem-req-details-title');
+
             summaryText.innerHTML =
-                ` ${gematikLabels.requirements.TESTPROCEDURE} ${gematikLabels.common.FOR} ${combinedReqKey}`;
+                ` ${gematikLabels.requirements.TESTPROCEDURE}`;
 
+            summary.appendChild(icon);
             summary.appendChild(summaryText);
-
             details.appendChild(summary);
 
             const table = document.createElement('table');
+
+            const thead = document.createElement('thead');
+            const headRow = document.createElement('tr');
+            
+            const actorHead = document.createElement('th');
+            actorHead.textContent = gematikLabels.requirements.ACTOR
+
+            const procedureHead = document.createElement('th');
+            procedureHead.textContent = gematikLabels.requirements.TESTPROCEDURE || 'Test Procedure';
+
+            headRow.appendChild(actorHead);
+            headRow.appendChild(procedureHead);
+            thead.appendChild(headRow);
 
             const tbody = document.createElement('tbody');
 
@@ -174,17 +219,32 @@ function renderRequirements() {
 
                 tr.appendChild(actorTd);
                 tr.appendChild(textTd);
+
                 tbody.appendChild(tr);
             });
 
+            table.appendChild(thead);
             table.appendChild(tbody);
             details.appendChild(table);
             reqDiv.appendChild(details);
+        } else {
+            const actorListSpan = document.createElement('span');
+            actorListSpan.classList.add('gem-req-actor');
+            actorListSpan.innerHTML = actorText;
+            reqLastlineSpan.appendChild(actorListSpan);
         }
+
+        const endSymbol = document.createElement('span');
+        endSymbol.innerHTML = ' [<=]';
+
+        reqLastlineSpan.appendChild(endSymbol);
+
+        reqDiv.appendChild(reqLastlineSpan);
 
         req.parentElement.replaceChild(reqDiv, req);
     });
 }
+
 
 function hashLinkHighlightTarget(targetId) {
     const targetElement = document.getElementById(targetId);

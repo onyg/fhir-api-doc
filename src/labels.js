@@ -6,7 +6,9 @@ const defaultRequirements = {
     SHOULD: "SOLL",
     SHOULD_NOT: "SOLL NICHT",
     MAY: "KANN",
-    TESTPROCEDURE: "Pr&uuml;fverfahren",
+    // TESTPROCEDURE: "Pr&uuml;fverfahren",
+    TESTPROCEDURE: "Art der Nachweisführung",
+    ACTOR: "Produkt-/Anbietertyp"
 };
 
 const defaultCommon = {
