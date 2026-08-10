@@ -116,3 +116,23 @@
     width: 90%;
 }
 
+/*
+ * Release notes diff view (diff2html).
+ * These rules replace the former custom `rawTemplates` passed to Diff2HtmlUI,
+ * which were compiled at runtime via Hogan (`new Function`) and violated the
+ * server Content Security Policy (`script-src` without `'unsafe-eval'`).
+ * Using diff2html's pre-compiled default templates avoids the eval; the cosmetic
+ * customizations are reproduced here instead.
+ */
+.diff-collapse-area .d2h-file-header {
+    display: none;
+}
+
+.diff-collapse-area .d2h-file-wrapper {
+    margin-bottom: 0;
+}
+
+.diff-collapse-area .d2h-code-line-ctn {
+    white-space: normal;
+    color: dimgray;
+}
