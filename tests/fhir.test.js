@@ -2674,3 +2674,69 @@ describe('parseFhirOperationCapabilityStatement', () => {
         });
     });
 });
+
+describe('TI interaction extensions and conditional capabilities', () => {
+    const base = 'https://gematik.de/fhir/ti/StructureDefinition/';
+    const assigned = (name, codes) => ({ name, type: 'token', extension: codes.map(valueCode => ({ url: `${base}search-parameter-interaction`, valueCode })) });
+    const capability = { format: ['application/fhir+json'], rest: [{ resource: [{
+        type: 'Patient', interaction: [{ code: 'search-type' }, { code: 'read' }],
+        conditionalCreate: true, conditionalRead: 'full-support', conditionalUpdate: true, conditionalDelete: 'single',
+        searchParam: [assigned('status', []), assigned('ac', ['read', 'read']), assigned('identifier', ['conditional-update'])]
+    }] }] };
+
+    test('assigns normal search parameters and all conditional update/delete criteria', () => {
+        expect(fhir.parseFhirCapabilityStatement(capability, 'Patient', 'search-type').searchParams.map(p => p.name)).toEqual(['status']);
+        expect(fhir.parseFhirCapabilityStatement(capability, 'Patient', 'read').searchParams.map(p => p.name)).toEqual(['ac']);
+        for (const code of ['conditional-update', 'conditional-delete']) {
+            const result = fhir.parseFhirCapabilityStatement(capability, 'Patient', code);
+            expect(result.enabled).toBe(true);
+            expect(result.searchParams.map(p => p.name)).toEqual(['status', 'ac', 'identifier']);
+        }
+    });
+
+    test('derives conditional headers and 304 response', () => {
+        const create = fhir.parseFhirCapabilityStatement(capability, 'Patient', 'conditional-create');
+        expect(create.headerParams.map(p => p.name)).toContain('If-None-Exist');
+        expect(create.searchParams).toBeUndefined();
+        const read = fhir.parseFhirCapabilityStatement(capability, 'Patient', 'conditional-read');
+        expect(read.headerParams.map(p => p.name)).toEqual(expect.arrayContaining(['If-Modified-Since', 'If-None-Match']));
+        expect(read.responseInfos).toContainEqual(expect.objectContaining({ statusCode: '304' }));
+    });
+
+    test('requires one valid resource extension interaction selector', () => {
+        const resource = capability.rest[0].resource[0];
+        const malformed = JSON.parse(JSON.stringify(capability));
+        malformed.rest[0].resource[0].extension = [{ url: `${base}extension-http-header`, extension: [{ url: 'name', valueString: 'X-Test' }] }];
+        expect(() => fhir.parseFhirCapabilityStatement(malformed, 'Patient', 'read')).toThrow(/selector/);
+        const selected = JSON.parse(JSON.stringify(capability));
+        selected.rest[0].resource[0].extension = [{ url: `${base}extension-http-header`, extension: [{ url: 'interaction', valueCode: 'conditional-delete' }, { url: 'name', valueString: 'X-Test' }] }];
+        expect(fhir.parseFhirCapabilityStatement(selected, 'Patient', 'read').headerParams.map(p => p.name)).not.toContain('X-Test');
+        expect(fhir.parseFhirCapabilityStatement(selected, 'Patient', 'conditional-delete').headerParams.map(p => p.name)).toContain('X-Test');
+        expect(resource.type).toBe('Patient');
+    });
+});
+
+describe('operation parameter location', () => {
+    const url = 'https://gematik.de/fhir/ti/StructureDefinition/operation-parameter-location';
+    const capability = { rest: [{ operation: [{ definition: 'https://example.org/OperationDefinition/check' }] }] };
+    const operation = { url: 'https://example.org/OperationDefinition/check', code: 'check', parameter: [
+        { name: 'status', use: 'in', type: 'string', min: 1, documentation: 'Status', extension: [{ url, valueCode: 'query' }] },
+        { name: 'legacy', use: 'in', type: 'string' },
+        { name: 'result', use: 'out', type: 'boolean' }
+    ] };
+
+    test('marks explicit query parameters required while preserving legacy inputs', () => {
+        const result = fhir.parseFhirOperationCapabilityStatement(capability, operation, 'system');
+        expect(result.methods).toEqual(['POST']);
+        expect(result.searchParams).toEqual([
+            { name: 'status', type: 'string', documentation: 'Status', required: true, queryLocation: true },
+            { name: 'legacy', type: 'string', documentation: '-' }
+        ]);
+    });
+
+    test('rejects unsupported explicit locations', () => {
+        const invalid = JSON.parse(JSON.stringify(operation));
+        invalid.parameter[0].extension[0].valueCode = 'header';
+        expect(() => fhir.parseFhirOperationCapabilityStatement(capability, invalid, 'system')).toThrow(/Unsupported/);
+    });
+});

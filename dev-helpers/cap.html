@@ -21,6 +21,30 @@
         <p><a href="/bibliography.html">Bibliography</a></p>
         <p><a href="/openapi.html">OpenAPI</a></p>
 
+        <h2>RX</h2>
+        <div class="gematik-api"
+            data-api-type="FHIROperation"
+            data-api-fhir-invoke-level="instance"
+            data-api-fhir-resource-type="Task"
+            data-api-operation-id="TIFlowRXOPClose">
+            <div id="CapabilityStatement" data-url="./CapabilityStatement-ti-flow-fachdienst-server-rx.json"></div>
+            <div id="OperationDefinition" data-url="./OperationDefinition-tiflow-rx-close-op.json"></div>
+        </div>
+
+        <div class="gematik-api"
+            data-api-type="FHIRResource"
+            data-api-fhir-resource-type="Task"
+            data-api-fhir-interaction="read">
+            <div id="CapabilityStatement" data-url="./CapabilityStatement-ti-flow-fachdienst-server-rx.json"></div>
+        </div>
+
+        <div class="gematik-api"
+            data-api-type="FHIRResource"
+            data-api-fhir-resource-type="Consent"
+            data-api-fhir-interaction="conditional-delete">
+            <div id="CapabilityStatement" data-url="./CapabilityStatement-ti-flow-fachdienst-server-rx.json"></div>
+        </div>
+
         <h2>Medication</h2>
         <div class="gematik-apidoc"
           data-api-type="FHIRResource"

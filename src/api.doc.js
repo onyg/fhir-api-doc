@@ -323,7 +323,11 @@ const MAP_METHODS = {
     "history-type": "GET",
     "create": "POST",
     "search-type": "GET",
-    "_search": "POST"
+    "_search": "POST",
+    "conditional-create": "POST",
+    "conditional-read": "GET",
+    "conditional-update": "PUT",
+    "conditional-delete": "DELETE"
 };
 
 const MAP_URL_PATH = {
@@ -336,7 +340,11 @@ const MAP_URL_PATH = {
     "history-type": "{resourceType}/_history",
     "create": "{resourceType}",
     "search-type": "{resourceType}",
-    "_search": "{resourceType}/_search"
+    "_search": "{resourceType}/_search",
+    "conditional-create": "{resourceType}",
+    "conditional-read": "{resourceType}/[id]",
+    "conditional-update": "{resourceType}",
+    "conditional-delete": "{resourceType}"
 };
 
 const MAP_OPERATION_PATH = {
@@ -493,10 +501,10 @@ function appendHeaderInfo(parent, headerParams, formats, httpMethod=null) {
     ]);
     parent.appendChild(utils.createElement('div', { classes: ['operation-block-section-header'], innerHTML: gematikLabels.apiDoc.HeaderParams_Header }));
     headerParamsRows = headerParamsRows.concat(
-        headerParams.map(({ name, type, description, expectation }) => [
+        headerParams.map(({ name, type, description, expectation, required }) => [
             name,
             `<code>${type}</code>`,
-            description
+            required && name.startsWith('If-') ? `${description} (required)` : description
             // expectation
         ])
     );
@@ -552,11 +560,11 @@ function appendSearchParameters(parent, params, httpMethod, formats=null) {
     // This is not formally required by the FHIR spec but considered best practice.
     // Therefore, we exclude such parameters from the list of query/search parameters.
     const searchParametersRows = params
-        .filter(({ name }) => name !== "resource")
-        .map(({ name, definition, type, documentation, expectation }) => [
+        .filter(({ name, queryLocation }) => name !== "resource" || queryLocation)
+        .map(({ name, definition, type, documentation, expectation, required }) => [
             name,
             `<code>${type}</code>`,
-            documentation,
+            required ? `${documentation} (required)` : documentation,
         // expectation
         ]);
     if (Array.isArray(formats) && formats.length > 1) {
@@ -597,6 +605,7 @@ function renderCapabilityStatementResourceApiDocumentation(parent, capability, r
     }
     parent.classList.add("gem-ig-api-doc");
     const fhirData = fhir.parseFhirCapabilityStatement(capability, resourceType, _interaction);
+    if (fhirData.enabled === false) return;
     if (!(interaction in MAP_METHODS)) {
         console.warn(`Interaction code "${interaction}" is not mapped to an HTTP method.`);
         return;
@@ -608,11 +617,17 @@ function renderCapabilityStatementResourceApiDocumentation(parent, capability, r
     const urlBase = "[base]/" + path
     const operationMainBlock = createOperationMainBlock(MAP_METHODS[interaction], urlBase ? `${urlBase}${urlPath}` : urlPath);
     parent.appendChild(operationMainBlock);
+    if (interaction.startsWith('conditional-')) {
+        operationMainBlock.appendChild(utils.createElement('div', {
+            classes: ['operation-block-description'],
+            innerHTML: `Conditional interaction: ${interaction}`
+        }));
+    }
 
     appendInfoBox(operationMainBlock, operationId, fhirData.formats, description);
 
     appendHeaderInfo(operationMainBlock, fhirData.headerParams, fhirData.formats, MAP_METHODS[interaction]);
-    const searchParameters = _interaction === "search-type" ? fhirData.searchParams : [];
+    const searchParameters = ['conditional-update', 'conditional-delete', 'search-type', 'read', 'vread', 'update', 'patch', 'delete', 'create'].includes(_interaction) ? fhirData.searchParams : [];
     appendSearchParameters(operationMainBlock, searchParameters, MAP_METHODS[interaction], fhirData.formats);
 
 
