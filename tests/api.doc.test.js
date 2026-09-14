@@ -2316,3 +2316,27 @@ describe('appendSearchParameters', () => {
         expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.SearchParams_Header);
     });
 });
+
+describe('conditional resource rendering', () => {
+    const capability = { rest: [{ resource: [{
+        type: 'Patient', conditionalUpdate: true, conditionalDelete: 'single',
+        searchParam: [{ name: 'identifier', type: 'token', documentation: 'Patient identifier' }]
+    }] }] };
+
+    test('uses collection paths for conditional update and delete', () => {
+        for (const [interaction, method] of [['conditional-update', 'PUT'], ['conditional-delete', 'DELETE']]) {
+            const parent = document.createElement('div');
+            apiDoc.renderCapabilityStatementResourceApiDocumentation(parent, capability, 'Patient', interaction);
+            expect(parent.querySelector('.operation-block-summary-method').textContent).toBe(method);
+            expect(parent.querySelector('.operation-block-summary-path').textContent).toBe('[base]/Patient');
+            expect(parent.textContent).toContain('identifier');
+            expect(parent.textContent).toContain(`Conditional interaction: ${interaction}`);
+        }
+    });
+
+    test('does not render a disabled conditional interaction', () => {
+        const parent = document.createElement('div');
+        apiDoc.renderCapabilityStatementResourceApiDocumentation(parent, capability, 'Patient', 'conditional-create');
+        expect(parent.querySelector('.operation-block')).toBeNull();
+    });
+});
