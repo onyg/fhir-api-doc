@@ -245,7 +245,8 @@ function renderFHIROperationApi(div, params) {
             urlPath,
             description,
             requestExamples,
-            responseExamples
+            responseExamples,
+            operationDefinition.url
         );
     };
     
@@ -306,9 +307,9 @@ function renderWithOperationDefinition(parent, capability, operationDefinition, 
         return;
     }
     if (operationDefinition) {
-        renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples);
+        renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples, operationDefinitionUrl);
     } else if (operationDefinitionUrl) {
-        utils.loadData(operationDefinitionUrl).then(data => renderCapabilityStatementOperationApiDocumentation(parent, capability, data, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples));
+        utils.loadData(operationDefinitionUrl).then(data => renderCapabilityStatementOperationApiDocumentation(parent, capability, data, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples, operationDefinitionUrl));
     }
 }
 
@@ -461,10 +462,28 @@ function createOperationMainBlock(httpMethod, urlPath) {
 }
 
 
-function appendInfoBox(parent, operationId=null, formats=[], description=null) {
+function appendInfoBox(parent, operationId=null, formats=[], description=null, operationDefinitionUrl=null) {
     let withLowPadding = false;
     if (operationId) {
-        parent.appendChild(utils.createElement('div', { classes: ['operation-block-description'], innerHTML: `${gematikLabels.apiDoc.OperationId_Label}: <b>${operationId}</b>` }));
+        const operationIdContent = operationDefinitionUrl
+            ? `${gematikLabels.apiDoc.OperationId_Label}: `
+            : `${gematikLabels.apiDoc.OperationId_Label}: <b>${operationId}</b>`;
+        const operationIdElement = utils.createElement('div', {
+            classes: ['operation-block-description'],
+            innerHTML: operationIdContent
+        });
+        if (operationDefinitionUrl) {
+            const operationLink = utils.createElement('a', {
+                attributes: {
+                    href: operationDefinitionUrl.replace(/\.json$/, '.html'),
+                    target: '_blank',
+                    rel: 'noopener noreferrer'
+                },
+                innerHTML: `<b>${operationId}</b>`
+            });
+            operationIdElement.appendChild(operationLink);
+        }
+        parent.appendChild(operationIdElement);
         withLowPadding = true;
     }
     if (formats?.length) {
@@ -593,6 +612,115 @@ function appendSearchParameters(parent, params, httpMethod, formats=null) {
 
 }
 
+function getLocalProfileUrl(profileUrl) {
+    if (typeof profileUrl !== 'string' || !profileUrl) {
+        return null;
+    }
+    if (profileUrl.startsWith('./') && profileUrl.endsWith('.json')) {
+        return profileUrl;
+    }
+    const profileId = profileUrl.split('|')[0].replace(/\/+$/, '').split('/').pop()?.replace(/_/g, '-');
+    return profileId ? `./StructureDefinition-${profileId}.json` : null;
+}
+
+function appendDataModelsFromReferences(parent, profileReferences, includeDescription = true) {
+    if (profileReferences.length === 0) {
+        return;
+    }
+
+    const dataModelsContainer = utils.createElement('div', {
+        classes: ['operation-block-description', 'with-table']
+    });
+    const dataModelsHeader = utils.createElement('div', {
+        classes: ['operation-block-section-header'],
+        innerHTML: gematikLabels.apiDoc.DataModels_Header
+    });
+    parent.appendChild(dataModelsHeader);
+    parent.appendChild(dataModelsContainer);
+
+    Promise.all(profileReferences.map(async ({ usage, jsonUrl, htmlUrl, profile, display, label, displayPrefix, displaySuffix, type, description }) => {
+        const loadedProfile = profile || (jsonUrl ? utils.toJson(await utils.loadData(jsonUrl, false)) : null);
+        if (!loadedProfile && !display && !htmlUrl) {
+            return null;
+        }
+        const profileTitle = label || loadedProfile?.title || loadedProfile?.name || loadedProfile?.id || display;
+        const profileLabel = `${displayPrefix || ''}${profileTitle}${displaySuffix || ''}`;
+        const row = [
+            usage,
+            `<code>${loadedProfile?.type || type || ''}</code>`,
+            htmlUrl
+                ? `${displayPrefix || ''}<a href="${htmlUrl}" target="_blank" rel="noopener noreferrer">${profileTitle}</a>${displaySuffix || ''}`
+                : profileLabel
+        ];
+        if (includeDescription) {
+            row.push(loadedProfile?.description || description || '');
+        }
+        return row;
+    })).then(rows => {
+        const validRows = rows.filter(Boolean);
+        if (validRows.length > 0) {
+            const headers = [
+                gematikLabels.apiDoc.Usage_Label,
+                gematikLabels.apiDoc.Type_Label,
+                gematikLabels.apiDoc.Profile_Label
+            ];
+            if (includeDescription) {
+                headers.push(gematikLabels.apiDoc.Description_Label);
+            }
+            dataModelsContainer.appendChild(utils.createTable(headers, validRows, true, ['data-models-table']));
+        } else {
+            dataModelsHeader.remove();
+            dataModelsContainer.remove();
+        }
+    });
+}
+
+function appendDataModels(parent, operationDefinition) {
+    const operation = utils.toJson(operationDefinition);
+    const profileReferences = [
+        { usage: gematikLabels.apiDoc.Input_Label, profileUrl: operation?.inputProfile },
+        { usage: gematikLabels.apiDoc.Output_Label, profileUrl: operation?.outputProfile }
+    ].filter(({ profileUrl }) => profileUrl).map(({ usage, profileUrl }) => ({
+        usage,
+        jsonUrl: getLocalProfileUrl(profileUrl),
+        htmlUrl: getLocalProfileUrl(profileUrl)?.replace(/\.json$/, '.html')
+    })).filter(({ jsonUrl }) => jsonUrl).map((profileReference, index) => ({
+        ...profileReference,
+        label: [operation?.inputProfile, operation?.outputProfile].filter(Boolean)[index]
+    }));
+
+    appendDataModelsFromReferences(parent, profileReferences, false);
+}
+
+function appendResourceDataModels(parent, fhirData) {
+    const supportedProfiles = fhirData.supportedProfiles || [];
+    if (supportedProfiles.length === 0) {
+        return;
+    }
+
+    const profileList = utils.createElement('ul');
+    parent.appendChild(utils.createElement('div', {
+        classes: ['operation-block-section-header'],
+        innerHTML: gematikLabels.apiDoc.DataModels_Header
+    }));
+    parent.appendChild(utils.createElement('div', {
+        classes: ['operation-block-description', 'with-table'],
+        children: [profileList]
+    }));
+
+    Promise.all(supportedProfiles.map(async profileUrl => {
+        const jsonUrl = getLocalProfileUrl(profileUrl);
+        const htmlUrl = jsonUrl?.replace(/\.json$/, '.html');
+        const profileLink = htmlUrl
+            ? utils.createElement('a', {
+                attributes: { href: htmlUrl, target: '_blank', rel: 'noopener noreferrer' },
+                innerHTML: profileUrl
+            })
+            : utils.createElement('span', { innerHTML: profileUrl });
+        return utils.createElement('li', { children: [profileLink] });
+    })).then(items => items.forEach(item => profileList.appendChild(item)));
+}
+
 
 function renderCapabilityStatementResourceApiDocumentation(parent, capability, resourceType, interaction, operationId=null, urlPath=null, description=null, requestExamples=null, responseExamples=null) {
     if (!capability) {
@@ -629,6 +757,7 @@ function renderCapabilityStatementResourceApiDocumentation(parent, capability, r
     appendHeaderInfo(operationMainBlock, fhirData.headerParams, fhirData.formats, MAP_METHODS[interaction]);
     const searchParameters = ['conditional-update', 'conditional-delete', 'search-type', 'read', 'vread', 'update', 'patch', 'delete', 'create'].includes(_interaction) ? fhirData.searchParams : [];
     appendSearchParameters(operationMainBlock, searchParameters, MAP_METHODS[interaction], fhirData.formats);
+    appendResourceDataModels(operationMainBlock, fhirData);
 
 
     if (fhirData.searchInclude || fhirData.searchRevInclude) {
@@ -647,7 +776,7 @@ function renderCapabilityStatementResourceApiDocumentation(parent, capability, r
 }
 
 
-function renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType=null, operationId=null, urlPath=null, description=null, requestExamples=null, responseExamples=null) {
+function renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType=null, operationId=null, urlPath=null, description=null, requestExamples=null, responseExamples=null, operationDefinitionUrl=null) {
     parent.classList.add("gem-ig-api-doc");
     const fhirData = fhir.parseFhirOperationCapabilityStatement(capability, operationDefinition, invokeLevel, resourceType);
     fhirData.methods.forEach(httpMethod => {
@@ -664,9 +793,10 @@ function renderCapabilityStatementOperationApiDocumentation(parent, capability, 
         const operationMainBlock = createOperationMainBlock(httpMethod, urlBase ? `${urlBase}${urlPath}` : urlPath);
         parent.appendChild(operationMainBlock);
 
-        appendInfoBox(operationMainBlock, operationId, fhirData.formats, description);
+        appendInfoBox(operationMainBlock, operationId, fhirData.formats, description, operationDefinitionUrl);
         appendHeaderInfo(operationMainBlock, fhirData.headerParams, fhirData.formats, httpMethod);
         appendSearchParameters(operationMainBlock, fhirData.searchParams, httpMethod, fhirData.formats);
+        appendDataModels(operationMainBlock, operationDefinition);
         appendExamples(operationMainBlock, requestExamples, responseExamples);
         appendResponseInfo(operationMainBlock, fhirData.responseInfos);
     });
@@ -722,6 +852,8 @@ export default {
     appendExamples,
     appendResponseInfo,
     appendSearchParameters,
+    appendDataModels,
+    appendResourceDataModels,
     renderCapabilityStatementResourceApiDocumentation,
     renderCapabilityStatementOperationApiDocumentation,
     renderCustomApiDocumentation,

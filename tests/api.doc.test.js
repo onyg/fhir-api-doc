@@ -1660,6 +1660,16 @@ describe('apiDoc.appendInfoBox', () => {
         expect(operationDiv.innerHTML).toContain('<b>test-operation-id</b>');
     });
 
+    it('should link operationId to the OperationDefinition HTML page', () => {
+        apiDoc.appendInfoBox(parent, 'test-operation-id', [], null, './OperationDefinition-test-operation.json');
+
+        const operationLink = parent.querySelector('a');
+        expect(operationLink.getAttribute('href')).toBe('./OperationDefinition-test-operation.html');
+        expect(operationLink.getAttribute('target')).toBe('_blank');
+        expect(operationLink.getAttribute('rel')).toBe('noopener noreferrer');
+        expect(operationLink.innerHTML).toBe('<b>test-operation-id</b>');
+    });
+
     it('should append formats when provided as array', () => {
         apiDoc.appendInfoBox(parent, null, ['application/json', 'application/xml'], null);
     
@@ -2314,6 +2324,68 @@ describe('appendSearchParameters', () => {
 
         const sectionHeader = parent.querySelector('.operation-block-section-header');
         expect(sectionHeader.textContent).toBe(gematikLabels.apiDoc.SearchParams_Header);
+    });
+});
+
+describe('appendDataModels', () => {
+    it('renders linked input and output profiles', async () => {
+        global.fetch = jest.fn(url => Promise.resolve({
+            ok: true,
+            text: () => Promise.resolve(JSON.stringify(url.includes('Input') ? {
+                title: 'Input profile',
+                type: 'Parameters',
+                description: 'Input description'
+            } : {
+                title: 'Output profile',
+                type: 'Bundle',
+                description: 'Output description'
+            }))
+        }));
+        const parent = document.createElement('div');
+
+        apiDoc.appendDataModels(parent, {
+            inputProfile: 'https://gematik.de/fhir/tiflow-erezept/StructureDefinition/Input',
+            outputProfile: 'https://gematik.de/fhir/tiflow-erezept/StructureDefinition/Output'
+        });
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        const table = parent.querySelector('.data-models-table');
+        expect(parent.querySelector('.operation-block-section-header').textContent)
+            .toBe(gematikLabels.apiDoc.DataModels_Header);
+        expect(Array.from(table.querySelectorAll('th')).map(cell => cell.textContent))
+            .toEqual(['Verwendung', 'Type', 'Profil']);
+        expect(table.rows[1].cells[0].textContent).toBe('Eingabe');
+        expect(table.rows[1].cells[2].querySelector('a').getAttribute('href'))
+            .toBe('./StructureDefinition-Input.html');
+        expect(table.rows[1].cells[2].querySelector('a').getAttribute('target'))
+            .toBe('_blank');
+        expect(table.rows[1].cells[2].querySelector('a').getAttribute('rel'))
+            .toBe('noopener noreferrer');
+        expect(table.rows[1].cells[2].textContent)
+            .toContain('https://gematik.de/fhir/tiflow-erezept/StructureDefinition/Input');
+        expect(table.rows[1].cells[1].textContent).toBe('Parameters');
+    });
+});
+
+describe('appendResourceDataModels', () => {
+    it('links supportedProfile canonicals without fetching profile JSON', async () => {
+        global.fetch = jest.fn();
+        const parent = document.createElement('div');
+
+        apiDoc.appendResourceDataModels(parent, {
+            supportedProfiles: [
+                'https://gematik.de/fhir/erp/StructureDefinition/GEM_ERP_PR_Task'
+            ]
+        });
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        const profileLink = parent.querySelector('a');
+        expect(profileLink.getAttribute('href')).toBe('./StructureDefinition-GEM-ERP-PR-Task.html');
+        expect(profileLink.textContent)
+            .toBe('https://gematik.de/fhir/erp/StructureDefinition/GEM_ERP_PR_Task');
+        expect(profileLink.getAttribute('target')).toBe('_blank');
+        expect(profileLink.getAttribute('rel')).toBe('noopener noreferrer');
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 });
 

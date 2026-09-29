@@ -197,12 +197,21 @@ function parseFhirCapabilityStatement(data, resourceType, interactionCode = "sea
         const searchParams = enabled && (!conditional || ['conditional-update', 'conditional-delete'].includes(interactionCode))
             ? getRelatedSearchParams(resourceDetails, interactionCode) : undefined;
         if (enabled && ['conditional-update', 'conditional-delete'].includes(interactionCode) && !resourceDetails.searchParam?.length) console.warn(`${interactionCode} on ${resourceType} has no search parameters`);
+        const profiles = [
+            ...(resourceDetails.profile ? [resourceDetails.profile] : []),
+            ...(Array.isArray(resourceDetails.supportedProfile) ? resourceDetails.supportedProfile : [])
+        ];
+        const supportedProfiles = Array.isArray(resourceDetails.supportedProfile)
+            ? resourceDetails.supportedProfile
+            : [];
 
         return {
             ...(conditional ? { enabled } : {}),
             searchParams,
             searchInclude: resourceDetails.searchInclude,
             searchRevInclude: resourceDetails.searchRevInclude,
+            ...(profiles.length > 0 ? { profiles } : {}),
+            ...(supportedProfiles.length > 0 ? { supportedProfiles } : {}),
             headerParams: headers,
             responseInfos: responses,
             formats: capabilityStatement.format,
