@@ -2340,3 +2340,28 @@ describe('conditional resource rendering', () => {
         expect(parent.querySelector('.operation-block')).toBeNull();
     });
 });
+
+describe('operation query parameters by HTTP method', () => {
+    test('POST requires explicit query location while GET preserves legacy inputs', () => {
+        const parent = document.createElement('div');
+        const locationUrl = 'https://gematik.de/fhir/ti/StructureDefinition/operation-parameter-location';
+        const methodUrl = 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-method';
+        apiDoc.renderCapabilityStatementOperationApiDocumentation(parent, { rest: [{}] }, {
+            code: 'summary',
+            extension: ['POST', 'GET'].map(valueCode => ({ url: methodUrl, valueCode })),
+            parameter: [
+                { name: 'identifier', use: 'in', type: 'string' },
+                { name: 'secret', use: 'in', type: 'string', extension: [{ url: locationUrl, valueCode: 'query' }] },
+                { name: 'payload', use: 'in', type: 'Bundle', extension: [{ url: locationUrl, valueCode: 'body' }] },
+                { name: 'X-Test', use: 'in', type: 'string', extension: [{ url: locationUrl, valueCode: 'header' }] }
+            ]
+        }, 'system');
+        const [post, get] = parent.children;
+        const names = block => [...block.querySelectorAll('.params-table')].at(-1)
+            ? [...[...block.querySelectorAll('.params-table')].at(-1).querySelectorAll('tbody tr')].map(row => row.cells[0].textContent)
+            : [];
+        expect(names(post)).toEqual(['secret']);
+        expect(names(get)).toEqual(['identifier', 'secret']);
+        expect(post.textContent).toContain('X-Test');
+    });
+});

@@ -2736,7 +2736,19 @@ describe('operation parameter location', () => {
 
     test('rejects unsupported explicit locations', () => {
         const invalid = JSON.parse(JSON.stringify(operation));
-        invalid.parameter[0].extension[0].valueCode = 'header';
+        invalid.parameter[0].extension[0].valueCode = 'path';
         expect(() => fhir.parseFhirOperationCapabilityStatement(capability, invalid, 'system')).toThrow(/Unsupported/);
     });
+});
+
+test('operation header and body locations are accepted and excluded from query parameters', () => {
+    const url = 'https://gematik.de/fhir/ti/StructureDefinition/operation-parameter-location';
+    const result = fhir.parseFhirOperationCapabilityStatement({ rest: [{}] }, {
+        code: 'check', parameter: [
+            { name: 'X-Test', use: 'in', type: 'string', documentation: 'Header', min: 1, extension: [{ url, valueCode: 'header' }] },
+            { name: 'payload', use: 'in', type: 'Bundle', extension: [{ url, valueCode: 'body' }] }
+        ]
+    }, 'system');
+    expect(result.searchParams).toEqual([]);
+    expect(result.headerParams).toContainEqual({ name: 'X-Test', type: 'string', description: 'Header', required: true });
 });

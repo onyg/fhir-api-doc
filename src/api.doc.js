@@ -666,7 +666,10 @@ function renderCapabilityStatementOperationApiDocumentation(parent, capability, 
 
         appendInfoBox(operationMainBlock, operationId, fhirData.formats, description);
         appendHeaderInfo(operationMainBlock, fhirData.headerParams, fhirData.formats, httpMethod);
-        appendSearchParameters(operationMainBlock, fhirData.searchParams, httpMethod, fhirData.formats);
+        const queryParams = httpMethod === 'POST'
+            ? fhirData.searchParams.filter(param => param.queryLocation === true)
+            : fhirData.searchParams;
+        appendSearchParameters(operationMainBlock, queryParams, httpMethod, fhirData.formats);
         appendExamples(operationMainBlock, requestExamples, responseExamples);
         appendResponseInfo(operationMainBlock, fhirData.responseInfos);
     });

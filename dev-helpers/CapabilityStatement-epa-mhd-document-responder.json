@@ -1,0 +1,1960 @@
+{
+  "resourceType": "CapabilityStatement",
+  "id": "epa-mhd-document-responder",
+  "meta": {
+    "profile": [
+      "https://gematik.de/fhir/ti/StructureDefinition/ti-capability-statement"
+    ]
+  },
+  "extension": [
+    {
+      "extension": [
+        {
+          "url": "name",
+          "valueString": "X-Request-ID"
+        },
+        {
+          "url": "type",
+          "valueString": "string"
+        },
+        {
+          "url": "description",
+          "valueString": "UUID of the request message"
+        },
+        {
+          "url": "format",
+          "valueString": "uuid"
+        },
+        {
+          "url": "required",
+          "valueBoolean": true
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header"
+    },
+    {
+      "extension": [
+        {
+          "url": "name",
+          "valueString": "x-insurantid"
+        },
+        {
+          "url": "type",
+          "valueString": "string"
+        },
+        {
+          "url": "description",
+          "valueString": "Health Record Identifier"
+        },
+        {
+          "url": "pattern",
+          "valueString": "^[A-Z]{1}\\d{9}$"
+        },
+        {
+          "url": "required",
+          "valueBoolean": true
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header"
+    },
+    {
+      "extension": [
+        {
+          "url": "name",
+          "valueString": "x-useragent"
+        },
+        {
+          "url": "type",
+          "valueString": "string"
+        },
+        {
+          "url": "description",
+          "valueString": "user agent information"
+        },
+        {
+          "url": "pattern",
+          "valueString": "^[a-zA-Z0-9]{20}\\/[a-zA-Z0-9\\-\\.]{1,15}$"
+        },
+        {
+          "url": "required",
+          "valueBoolean": true
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-header"
+    },
+    {
+      "extension": [
+        {
+          "url": "statusCode",
+          "valueString": "403"
+        },
+        {
+          "url": "description",
+          "valueString": "Requestor not authorized (no user session with valid ID-Token available)"
+        },
+        {
+          "url": "responseType",
+          "valueString": "application/json"
+        },
+        {
+          "url": "errorCode",
+          "valueString": "invalAuth"
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+    },
+    {
+      "extension": [
+        {
+          "url": "statusCode",
+          "valueString": "403"
+        },
+        {
+          "url": "description",
+          "valueString": "Requestor has no valid entitlement"
+        },
+        {
+          "url": "responseType",
+          "valueString": "application/json"
+        },
+        {
+          "url": "errorCode",
+          "valueString": "notEntitled"
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+    },
+    {
+      "extension": [
+        {
+          "url": "statusCode",
+          "valueString": "403"
+        },
+        {
+          "url": "description",
+          "valueString": "Requestor role is not in the list of allowed user groups"
+        },
+        {
+          "url": "responseType",
+          "valueString": "application/json"
+        },
+        {
+          "url": "errorCode",
+          "valueString": "invalidOid"
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+    },
+    {
+      "extension": [
+        {
+          "url": "statusCode",
+          "valueString": "403"
+        },
+        {
+          "url": "description",
+          "valueString": "Device registration does not exist (if requestor role is oid_versicherter only)"
+        },
+        {
+          "url": "responseType",
+          "valueString": "application/json"
+        },
+        {
+          "url": "errorCode",
+          "valueString": "unregisteredDevice"
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+    },
+    {
+      "extension": [
+        {
+          "url": "statusCode",
+          "valueString": "404"
+        },
+        {
+          "url": "description",
+          "valueString": "Health record is in state UNKNOWN or INITIALIZED"
+        },
+        {
+          "url": "responseType",
+          "valueString": "application/json"
+        },
+        {
+          "url": "errorCode",
+          "valueString": "noHealthRecord"
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+    },
+    {
+      "extension": [
+        {
+          "url": "statusCode",
+          "valueString": "409"
+        },
+        {
+          "url": "description",
+          "valueString": "Request conflicts with the current state of the health record"
+        },
+        {
+          "url": "responseType",
+          "valueString": "application/json"
+        },
+        {
+          "url": "errorCode",
+          "valueString": "statusMismatch"
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+    },
+    {
+      "extension": [
+        {
+          "url": "statusCode",
+          "valueString": "500"
+        },
+        {
+          "url": "description",
+          "valueString": "Any other error"
+        },
+        {
+          "url": "responseType",
+          "valueString": "application/json"
+        },
+        {
+          "url": "errorCode",
+          "valueString": "internalError"
+        }
+      ],
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+    },
+    {
+      "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-base-url",
+      "valueString": "http://epa4all/epa/mhd/api/v1/fhir/"
+    }
+  ],
+  "url": "https://gematik.de/fhir/epa-mhd/CapabilityStatement/epa-mhd-document-responder",
+  "version": "1.2.0",
+  "name": "EPAMHDDocumentResponder",
+  "title": "EPA MHD Service (Document Responder - Server)",
+  "status": "active",
+  "date": "2026-12-08",
+  "publisher": "gematik GmbH",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://www.gematik.de"
+        }
+      ]
+    }
+  ],
+  "description": "CapabilityStatement für den ePA MHD Service (Document Responder - Server)",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "DE"
+        }
+      ]
+    }
+  ],
+  "copyright": "gematik GmbH / Dieser Implementation Guide ist lizenziert unter [Apache License](./license.html), Version 2.0.",
+  "kind": "requirements",
+  "fhirVersion": "4.0.1",
+  "format": [
+    "application/fhir+json",
+    "application/fhir+xml"
+  ],
+  "rest": [
+    {
+      "mode": "server",
+      "resource": [
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+              "valueCode": "SHALL"
+            }
+          ],
+          "supportedProfile": [
+            "https://gematik.de/fhir/epa-mhd/StructureDefinition/epa-mhd-document-reference"
+          ],
+          "_supportedProfile": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ]
+            }
+          ],
+          "interaction": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "200"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Successful operation"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "Bundle"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Unknown search parameter"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_PARAM_UNKNOWN"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid query parameter(s)"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_BAD_SYNTAX"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid request"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_BAD_FORMAT"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "404"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Unknown resource type"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_UNKNOWN_TYPE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Access Code Violation"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_ACCESS_CODE_VIOLATION"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Health Professional Organization"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_PROFESSIONAL_ORGANIZATION"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Health Professional Organization"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_PROFESSIONAL_ORGANIZATION"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Health Professional Role"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_PROFESSIONAL_ROLE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Health Professional Role"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_PROFESSIONAL_ROLE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Health Professional Name"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_PROFESSIONAL_NAME"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Rate Limit Exceeded"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_RATE_LIMIT_EXCEEDED"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Search Too Complex"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_SEARCH_TOO_COMPLEX"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                }
+              ],
+              "code": "search-type"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "200"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Successful operation"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "DocumentReference"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid request"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_BAD_FORMAT"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "404"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Unknown resource type"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_UNKNOWN_TYPE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "404"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Resource is not known"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_RESOURCE_ID_FAIL"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                }
+              ],
+              "code": "read"
+            }
+          ],
+          "searchParam": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "_id",
+              "definition": "http://hl7.org/fhir/SearchParameter/Resource-id",
+              "type": "token",
+              "documentation": "Aktenweit eindeutige Kennung des Dokuments auf Basis von DocumentReference.entryUUID"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "_content",
+              "definition": "http://hl7.org/fhir/SearchParameter/Resource-content",
+              "type": "string",
+              "documentation": "Angaben für inhaltsbasierte Volltextsuche in von DocumentReference referenzierten Dokumenten"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "_lastUpdated",
+              "definition": "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated",
+              "type": "date",
+              "documentation": "Änderungszeitpunkt der DocumentReference"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "author.given",
+              "type": "string",
+              "documentation": "Vorname der dokumenterstellenden Person auf Basis von DocumentReference.author, welcher dem authorPerson-Slot der DocumentEntry.author-Classification entspricht"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "author.family",
+              "type": "string",
+              "documentation": "Nachname der dokumenterstellenden Person auf Basis von DocumentReference.author, welcher dem authorPerson-Slot der DocumentEntry.author-Classification entspricht"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "author.organization.name",
+              "type": "string",
+              "documentation": "Name der dokumenterstellenden Leistungserbringerinstitution auf Basis von DocumentReference.author, welcher dem authorInstitution-Slot der DocumentEntry.author-Classification entspricht"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "category",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-category",
+              "type": "token",
+              "documentation": "Grobe Klassifizierung des Dokuments auf Basis von DocumentReference.category"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "contenttype",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-contenttype",
+              "type": "token",
+              "documentation": "MimeType des Dokuments auf Basis von DocumentReference.content.attachment.contentType"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "creation",
+              "definition": "https://profiles.ihe.net/ITI/MHD/SearchParameter/DocumentReference-Creation",
+              "type": "date",
+              "documentation": "Erstellungszeitpunkt des Dokuments auf Basis von DocumentReference.content.attachment.creation"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "date",
+              "definition": "https://profiles.ihe.net/ITI/MHD/SearchParameter/DocumentReference-date",
+              "type": "date",
+              "documentation": "Erstellungszeitpunkt der DocumentReference"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "description",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-description",
+              "type": "string",
+              "documentation": "Ergänzende Hinweise in Freitext auf Basis von DocumentReference.description"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "event",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-event",
+              "type": "token",
+              "documentation": "Die zur Erstellung des Dokuments geführten Ereignisse auf Basis von DocumentReference.context.event"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "facility",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-facility",
+              "type": "token",
+              "documentation": "Die auf Basis von DocumentReference.context.facilityTypeArt benannte Art der Einrichtung des dokumentierenden Ereignisses"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "format",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-format",
+              "type": "token",
+              "documentation": "Global eindeutiger Code für das Dokumentenformat  auf Basis von DocumentReference.content.format"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "identifier",
+              "definition": "http://hl7.org/fhir/SearchParameter/clinical-identifier",
+              "type": "token",
+              "documentation": "Aktenweit eindeutige Kennung des Dokuments auf Basis von DocumentReference.entryUUID"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "language",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-language",
+              "type": "token",
+              "documentation": "Sprache in der ein Dokument verfasst ist"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "patient",
+              "definition": "http://hl7.org/fhir/SearchParameter/clinical-patient",
+              "type": "reference",
+              "documentation": "Aktenkontoinhaber"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "patient.identifier",
+              "type": "token",
+              "documentation": "Identifikator des Aktenkontoinhabers"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "period",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-period",
+              "type": "date",
+              "documentation": "Zeitraum des dokumentierenden Ereignisses auf Basis von DocumentReference.context.period"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "related",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-related",
+              "type": "reference",
+              "documentation": "ID-Liste mit assoziierten Dokumenten auf Basis von DocumentReference.context.related"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "relatesto",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-relatesto",
+              "type": "reference",
+              "documentation": "Zieldokument einer Dokumentbeziehung auf Basis von DocumentReference.relatesTo.target"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "relation",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-relation",
+              "type": "token",
+              "documentation": "Art der Dokumentbeziehung wie replaces oder appends auf Basis von DocumentReference.relatesTo.code"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "relationship",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-relationship",
+              "type": "composite",
+              "documentation": "Kombination aus relation und relatesto auf Basis von DocumentReference.relatesTo"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "security-label",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-security-label",
+              "type": "token",
+              "documentation": "Vertraulichkeitskennzeichnung/Datenkategorie des Dokuments auf Basis von DocumentReference.securityLabel"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "setting",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-setting",
+              "type": "token",
+              "documentation": "Art der Fachrichtung der erstellenden Einrichtung auf Basis von DocumentReference.context.practiceSetting"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "status",
+              "definition": "http://hl7.org/fhir/SearchParameter/DocumentReference-status",
+              "type": "token",
+              "documentation": "Status des Dokuments auf Basis von DocumentReference.status"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "title",
+              "definition": "https://gematik.de/fhir/epa-mhd/SearchParameter/epa-mhd-documentreference-title",
+              "type": "string",
+              "documentation": "Titel des Dokuments auf Basis von DocumentReference.content.attachment.title"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "type",
+              "definition": "http://hl7.org/fhir/SearchParameter/clinical-type",
+              "type": "token",
+              "documentation": "Art des Dokuments auf Basis von DocumentReference.type"
+            }
+          ],
+          "operation": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "200"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Successful operation"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "Parameters"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid query parameter(s)"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_BAD_SYNTAX"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "404"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Unknown resource type"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_UNKNOWN_TYPE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Rate Limit Exceeded"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_RATE_LIMIT_EXCEEDED"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Search Too Complex"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_SEARCH_TOO_COMPLEX"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                }
+              ],
+              "name": "find-replace-head",
+              "definition": "https://gematik.de/fhir/epa-mhd/OperationDefinition/find-replace-head-op",
+              "documentation": "Die Find Replace Head Operation des ePA MHD Service dient der Ermittlung der HEAD-Version eines Dokuments."
+            }
+          ],
+          "type": "DocumentReference",
+          "versioning": "versioned-update",
+          "readHistory": true
+        },
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+              "valueCode": "SHALL"
+            }
+          ],
+          "supportedProfile": [
+            "https://gematik.de/fhir/epa-mhd/StructureDefinition/epa-document-search-result-bundle"
+          ],
+          "_supportedProfile": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ]
+            }
+          ],
+          "type": "Bundle",
+          "versioning": "versioned-update",
+          "readHistory": true
+        },
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+              "valueCode": "SHALL"
+            }
+          ],
+          "supportedProfile": [
+            "https://gematik.de/fhir/epa-mhd/StructureDefinition/epa-mhd-folder",
+            "https://gematik.de/fhir/epa-mhd/StructureDefinition/epa-mhd-submission-set",
+            "https://gematik.de/fhir/epa-mhd/StructureDefinition/epa-mhd-list-search-result-bundle"
+          ],
+          "_supportedProfile": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ]
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ]
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ]
+            }
+          ],
+          "interaction": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "200"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Successful operation"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "Bundle"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Unknown search parameter"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_PARAM_UNKNOWN"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid query parameter(s)"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_BAD_SYNTAX"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid request"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_BAD_FORMAT"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "404"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Unknown resource type"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_UNKNOWN_TYPE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Access Code Violation"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_ACCESS_CODE_VIOLATION"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Access Code"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_ACCESS_CODE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Health Professional Organization"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_PROFESSIONAL_ORGANIZATION"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Health Professional Organization"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_PROFESSIONAL_ORGANIZATION"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Health Professional Role"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_PROFESSIONAL_ROLE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid Health Professional Role"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_INVALID_PROFESSIONAL_ROLE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Missing Health Professional Name"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_MISSING_PROFESSIONAL_NAME"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Rate Limit Exceeded"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_RATE_LIMIT_EXCEEDED"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Search Too Complex"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MHDSVC_SEARCH_TOO_COMPLEX"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                }
+              ],
+              "code": "search-type"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "200"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Successful operation"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "DocumentReference"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "400"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Invalid request"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_BAD_FORMAT"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "404"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Unknown resource type"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_UNKNOWN_TYPE"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "404"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Resource is not known"
+                    },
+                    {
+                      "url": "responseType",
+                      "valueString": "TIOperationOutcome"
+                    },
+                    {
+                      "url": "errorCode",
+                      "valueString": "MSG_RESOURCE_ID_FAIL"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                }
+              ],
+              "code": "read"
+            }
+          ],
+          "searchParam": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "_id",
+              "definition": "http://hl7.org/fhir/SearchParameter/Resource-id",
+              "type": "token",
+              "documentation": "Aktenweit eindeutige Kennung der Liste auf Basis von List.entryUUID"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "_lastUpdated",
+              "definition": "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated",
+              "type": "date",
+              "documentation": "Änderungszeitpunkt der Liste"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "code",
+              "definition": "http://hl7.org/fhir/SearchParameter/clinical-code",
+              "type": "token",
+              "documentation": "Entspricht code.coding Wert. Kennzeichnung ob es sich um einen Folder oder ein SubmissionSet handelt."
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "date",
+              "definition": "http://hl7.org/fhir/SearchParameter/clinical-date",
+              "type": "date",
+              "documentation": "Erstellungszeitpunkt der Liste"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "designationType",
+              "definition": "https://profiles.ihe.net/ITI/MHD/SearchParameter/List-DesignationType",
+              "type": "token",
+              "documentation": "Klinische Aktivität die zum Einstellen der Liste geführt hat."
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "identifier",
+              "definition": "http://hl7.org/fhir/SearchParameter/clinical-identifier",
+              "type": "token",
+              "documentation": "Aktenweit eindeutige Kennung der Liste auf Basis von List.identifier"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "item",
+              "definition": "http://hl7.org/fhir/SearchParameter/List-item",
+              "type": "reference",
+              "documentation": "Referenz auf einen Listeneintrag zum Auffinden der List zu einer bestimmten DocumentReference"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "patient",
+              "definition": "http://hl7.org/fhir/SearchParameter/clinical-patient",
+              "type": "reference",
+              "documentation": "Referenz auf den Aktenkontoinhaber"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "patient.identifier",
+              "type": "token",
+              "documentation": "Identifikator des Aktenkontoinhabers"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "source.given",
+              "type": "string",
+              "documentation": "Vorname der Person, die die Liste erstellt hat."
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "source.family",
+              "type": "string",
+              "documentation": "Nachname der Person, die die Liste erstellt hat."
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "sourceId",
+              "definition": "https://profiles.ihe.net/ITI/MHD/SearchParameter/List-SourceId",
+              "type": "token",
+              "documentation": "Identifier von source als Ersteller der Liste"
+            },
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                }
+              ],
+              "name": "status",
+              "definition": "http://hl7.org/fhir/SearchParameter/List-status",
+              "type": "token",
+              "documentation": "Status der Liste auf Basis von List.status"
+            }
+          ],
+          "type": "List",
+          "versioning": "versioned-update",
+          "readHistory": true,
+          "profile": "https://profiles.ihe.net/ITI/MHD/StructureDefinition/IHE.MHD.List"
+        },
+        {
+          "interaction": [
+            {
+              "extension": [
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "200"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Successful operation"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                }
+              ],
+              "code": "read"
+            }
+          ],
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+              "valueCode": "SHALL"
+            }
+          ],
+          "operation": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+                  "valueCode": "SHALL"
+                },
+                {
+                  "extension": [
+                    {
+                      "url": "statusCode",
+                      "valueString": "200"
+                    },
+                    {
+                      "url": "description",
+                      "valueString": "Successful operation"
+                    }
+                  ],
+                  "url": "https://gematik.de/fhir/ti/StructureDefinition/extension-http-response-info"
+                }
+              ],
+              "name": "summary",
+              "definition": "https://gematik.de/fhir/epa-mhd/OperationDefinition/get-patient-summary-op",
+              "documentation": "Die Get-Patient-Summary-Operation des ePA MHD Service wird verwendet, um eine Zusammenfassung der Patientendaten als 'ePA EU Patient Summary' auf Type- oder Instance-Level abzurufen."
+            }
+          ],
+          "type": "Patient"
+        }
+      ]
+    }
+  ],
+  "instantiates": [
+    "https://gematik.de/fhir/epa/CapabilityStatement/epa-basic-server",
+    "https://profiles.ihe.net/ITI/MHD/CapabilityStatement/IHE.MHD.DocumentResponder",
+    "http://hl7.eu/fhir/health-data-api/CapabilityStatement/EEHRxF-DocumentAccessProvider"
+  ],
+  "implementationGuide": [
+    "https://gematik.de/fhir/ti/ImplementationGuide/de.gematik.ti",
+    "https://gematik.de/fhir/terminology/ImplementationGuide/de.gematik.terminology",
+    "https://gematik.de/fhir/epa/ImplementationGuide/de.gematik.epa",
+    "https://gematik.de/fhir/epa-mhd/ImplementationGuide/de.gematik.epa.mhd",
+    "https://gematik.de/fhir/epa-mhd/ImplementationGuide/de.gematik.epa.eps",
+    "https://gematik.de/fhir/epa-laboratory/ImplementationGuide/de.gematik.epa.laboratory"
+  ],
+  "imports": [
+    "https://gematik.de/fhir/epa/CapabilityStatement/epa-basic-server"
+  ],
+  "_imports": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation",
+          "valueCode": "SHALL"
+        }
+      ]
+    }
+  ]
+}

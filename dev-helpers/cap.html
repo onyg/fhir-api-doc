@@ -21,6 +21,30 @@
         <p><a href="/bibliography.html">Bibliography</a></p>
         <p><a href="/openapi.html">OpenAPI</a></p>
 
+        <h2>Patient Summary</h2>
+        <div class="gematik-api"
+          data-api-type="FHIROperation"
+          data-api-fhir-resource-type="Patient"
+          data-api-fhir-invoke-level="type"
+          data-api-operation-id="getPatientSummary_MHDSvc">
+          <div id="CapabilityStatement" data-url="./CapabilityStatement-epa-mhd-document-responder.json"></div>
+          <div id="OperationDefinition" data-url="./OperationDefinition-get-patient-summary-op.json"></div>
+          <div id="description">
+            Beispielanfrage auf der Type-Level-Ebene:
+            <br>
+            <pre>
+              <code>
+                POST /epa/mhd/api/v1/fhir/Patient/$summary HTTP/1.1
+                Host: epa4all
+                Content-Type: application/fhir+json
+                Accept: application/fhir+json
+                x-insurantid: G995030566
+                X-Request-ID: d0fdd349-195b-4376-8b45-913290e14125
+              </code>
+            </pre>
+          </div>
+        </div>
+
         <h2>RX</h2>
         <div class="gematik-api"
             data-api-type="FHIROperation"

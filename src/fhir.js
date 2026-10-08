@@ -264,8 +264,8 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
         .filter(param => param.use === "in")
         .filter(param => {
             const locations = (param.extension || []).filter(ext => ext.url === `${TI_URL}operation-parameter-location`);
-            if (locations.some(ext => ext.valueCode !== 'query')) throw new Error(`Unsupported operation parameter location: ${param.name}`);
-            return true;
+            if (locations.some(ext => !['query', 'header', 'body'].includes(ext.valueCode))) throw new Error(`Unsupported operation parameter location: ${param.name}`);
+            return locations.length === 0 || locations.some(ext => ext.valueCode === 'query');
         })
         .map(({ name, type, documentation = '-', min, extension }) => {
             const queryLocation = (extension || []).some(ext => ext.url === `${TI_URL}operation-parameter-location`);
@@ -285,13 +285,21 @@ function parseFhirOperationCapabilityStatement(data, opData, invokeLevel, resour
         ? extractResponseInfoValues(operation.extension)
         : [];
 
+    const parameterHeaders = (operationDefinition?.parameter || [])
+        .filter(param => param.use === 'in' && (param.extension || []).some(
+            ext => ext.url === `${TI_URL}operation-parameter-location` && ext.valueCode === 'header'
+        ))
+        .map(({ name, type, documentation = '-', min }) => ({
+            name, type, description: documentation, required: min > 0
+        }));
+
     const methods = extractHttpMethods(operationDefinition.extension)
 
     return {
         baseUrl: extractBaseUrl(extensions),
         code: `${operationDefinition.code}`,
         formats: capabilityStatement.format,
-        headerParams: [...localHeaders, ...globalHeaders],
+        headerParams: [...localHeaders, ...globalHeaders, ...parameterHeaders],
         responseInfos: [...localResponses, ...globalResponses],
         searchParams: searchParams,
         methods: methods
