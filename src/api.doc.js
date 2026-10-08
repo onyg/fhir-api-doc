@@ -172,6 +172,7 @@ function renderApiDocumentation(div, config, content) {
             capabilityStatement: content.capabilityStatement,
             operationDefinition: content.operationDefinition,
             invokeLevel: config.invokeLevel,
+            httpMethod: config.httpMethod,
             resourceType: config.resourceType,
             operationId: config.operationId,
             urlPath: config.urlPath,
@@ -231,7 +232,7 @@ function renderFHIRResourceApi(div, params) {
 
 function renderFHIROperationApi(div, params) {
     const { capabilityStatement, operationDefinition, invokeLevel, resourceType, 
-        operationId, urlPath, description, requestExamples, responseExamples } = params;
+        operationId, urlPath, description, requestExamples, responseExamples, httpMethod } = params;
     
     const renderOperation = (capData) => {
         renderWithOperationDefinition(
@@ -245,7 +246,8 @@ function renderFHIROperationApi(div, params) {
             urlPath,
             description,
             requestExamples,
-            responseExamples
+            responseExamples,
+            httpMethod
         );
     };
     
@@ -296,7 +298,7 @@ function renderCapabilityStatementApiDoc() {
     });
 }
 
-function renderWithOperationDefinition(parent, capability, operationDefinition, operationDefinitionUrl, invokeLevel, resourceType=null, operationId=null, urlPath=null, description=null, requestExamples=null, responseExamples=null) {
+function renderWithOperationDefinition(parent, capability, operationDefinition, operationDefinitionUrl, invokeLevel, resourceType=null, operationId=null, urlPath=null, description=null, requestExamples=null, responseExamples=null, httpMethod=null) {
     if (!capability) {
         console.error(`CapabilityStatement is required but was not provided! CapabilityStatement is ${capability}.`);
         return;
@@ -306,9 +308,9 @@ function renderWithOperationDefinition(parent, capability, operationDefinition, 
         return;
     }
     if (operationDefinition) {
-        renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples);
+        renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples, httpMethod);
     } else if (operationDefinitionUrl) {
-        utils.loadData(operationDefinitionUrl).then(data => renderCapabilityStatementOperationApiDocumentation(parent, capability, data, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples));
+        utils.loadData(operationDefinitionUrl).then(data => renderCapabilityStatementOperationApiDocumentation(parent, capability, data, invokeLevel, resourceType, operationId, urlPath, description, requestExamples, responseExamples, httpMethod));
     }
 }
 
@@ -647,10 +649,17 @@ function renderCapabilityStatementResourceApiDocumentation(parent, capability, r
 }
 
 
-function renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType=null, operationId=null, urlPath=null, description=null, requestExamples=null, responseExamples=null) {
+function renderCapabilityStatementOperationApiDocumentation(parent, capability, operationDefinition, invokeLevel, resourceType=null, operationId=null, urlPath=null, description=null, requestExamples=null, responseExamples=null, selectedHttpMethod=null) {
     parent.classList.add("gem-ig-api-doc");
     const fhirData = fhir.parseFhirOperationCapabilityStatement(capability, operationDefinition, invokeLevel, resourceType);
-    fhirData.methods.forEach(httpMethod => {
+    const requestedMethod = selectedHttpMethod?.trim().toUpperCase();
+    const methods = requestedMethod
+        ? fhirData.methods.filter(method => method === requestedMethod)
+        : fhirData.methods;
+    if (requestedMethod && methods.length === 0) {
+        console.warn(`HTTP method "${requestedMethod}" is not defined for this operation.`);
+    }
+    methods.forEach(httpMethod => {
         if (!(invokeLevel in MAP_OPERATION_PATH)) {
             console.warn(`Invoke level "${invokeLevel}" is not supported.`);
             return;

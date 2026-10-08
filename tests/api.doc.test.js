@@ -2365,3 +2365,56 @@ describe('operation query parameters by HTTP method', () => {
         expect(post.textContent).toContain('X-Test');
     });
 });
+
+describe('data-api-method for FHIR operations', () => {
+    const operation = {
+        code: 'summary',
+        extension: ['POST', 'GET'].map(valueCode => ({
+            url: 'https://gematik.de/fhir/ti/StructureDefinition/extension-http-method', valueCode
+        }))
+    };
+
+    afterEach(() => {
+        document.body.innerHTML = '';
+        jest.restoreAllMocks();
+    });
+
+    test.each([[null, 2], ['GET', 1], [' post ', 1], ['', 2]])(
+        'renders the selected method from the HTML attribute %s', (method, count) => {
+            const div = document.createElement('div');
+            div.className = 'gematik-api';
+            div.setAttribute('data-api-type', 'FHIROperation');
+            div.setAttribute('data-api-fhir-invoke-level', 'system');
+            if (method !== null) div.setAttribute('data-api-method', method);
+            for (const [id, data] of [['CapabilityStatement', { rest: [{}] }], ['OperationDefinition', operation]]) {
+                const child = document.createElement('div');
+                child.id = id;
+                child.textContent = JSON.stringify(data);
+                div.appendChild(child);
+            }
+            document.body.appendChild(div);
+            apiDoc.renderCapabilityStatementApiDoc();
+            expect(div.children).toHaveLength(count);
+            if (method?.trim()) expect(div.textContent).toContain(method.trim().toUpperCase());
+        }
+    );
+
+    test('forwards the method when loading an external OperationDefinition', async () => {
+        jest.spyOn(utils, 'loadData').mockResolvedValue(operation);
+        const parent = document.createElement('div');
+        apiDoc.renderWithOperationDefinition(parent, { rest: [{}] }, null, '/op.json', 'system',
+            null, null, null, null, null, null, 'GET');
+        await Promise.resolve();
+        expect(parent.children).toHaveLength(1);
+        expect(parent.textContent).toContain('GET');
+    });
+
+    test('does not render methods absent from the definition', () => {
+        const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const parent = document.createElement('div');
+        apiDoc.renderCapabilityStatementOperationApiDocumentation(parent, { rest: [{}] }, operation, 'system',
+            null, null, null, null, null, null, 'DELETE');
+        expect(parent.children).toHaveLength(0);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('DELETE'));
+    });
+});
